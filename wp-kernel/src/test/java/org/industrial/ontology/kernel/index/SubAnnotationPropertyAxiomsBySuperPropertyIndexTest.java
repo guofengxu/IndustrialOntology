@@ -1,0 +1,85 @@
+package org.industrial.ontology.kernel.index;
+
+import com.google.common.collect.ImmutableList;
+import org.industrial.ontology.kernel.api.change.AddAxiomChange;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import static java.util.stream.Collectors.toSet;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.server.index.impl.SubAnnotationPropertyAxiomsBySuperPropertyIndexImpl_TestCase}.
+ * <p>
+ * Matthew Horridge
+ * Stanford Center for Biomedical Informatics Research
+ * 2019-08-17
+ */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class SubAnnotationPropertyAxiomsBySuperPropertyIndexTest {
+
+    private SubAnnotationPropertyAxiomsBySuperPropertyIndex impl;
+
+    @Mock
+    private OWLOntologyID ontologyId;
+
+    @Mock
+    private OWLSubAnnotationPropertyOfAxiom axiom;
+
+    @Mock
+    private OWLAnnotationProperty property;
+
+    @BeforeEach
+    public void setUp() {
+        when(axiom.getSuperProperty()).thenReturn(property);
+        impl = new SubAnnotationPropertyAxiomsBySuperPropertyIndex();
+        impl.applyChanges(ImmutableList.of(AddAxiomChange.of(ontologyId, axiom)));
+    }
+
+    @Test
+    public void shouldGetAxiomForSuperProperty() {
+        var axioms = impl.getAxiomsForSuperProperty(property, ontologyId).collect(toSet());
+        assertThat(axioms, contains(axiom));
+    }
+
+    @Test
+    public void shouldNotGetAxiomForOtherSuperProperty() {
+        var axioms = impl.getAxiomsForSuperProperty(mock(OWLAnnotationProperty.class), ontologyId).collect(toSet());
+        assertThat(axioms.isEmpty(), is(true));
+    }
+
+    @Test
+    public void shouldNotGetAxiomsForUnknownOntology() {
+        var axioms = impl.getAxiomsForSuperProperty(property, mock(OWLOntologyID.class)).collect(toSet());
+        assertThat(axioms.isEmpty(), is(true));
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void shouldThrowNpeIfOntologyIsNull() {
+        assertThrows(NullPointerException.class, () -> {
+            impl.getAxiomsForSuperProperty(property, null);
+        });
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void shouldThrowNpeIfPropertyIsNull() {
+        assertThrows(NullPointerException.class, () -> {
+            impl.getAxiomsForSuperProperty(null, ontologyId);
+        });
+    }
+}

@@ -1,0 +1,51 @@
+package org.industrial.ontology.kernel.index;
+
+
+
+import org.semanticweb.owlapi.model.OWLEntity;
+import javax.annotation.Nonnull;
+import java.util.Collection;
+
+import java.util.List;
+import java.util.stream.Stream;
+import static com.google.common.base.Preconditions.checkNotNull;
+import org.industrial.ontology.kernel.api.index.DependentIndex;
+import org.industrial.ontology.kernel.api.index.Index;
+
+import org.industrial.ontology.kernel.api.index.OntologySignatureIndex;
+import org.industrial.ontology.kernel.api.index.ProjectOntologiesIndex;
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.server.index.impl.ProjectSignatureIndexImpl}.
+ * <p>
+ * Matthew Horridge
+ * Stanford Center for Biomedical Informatics Research
+ * 2019-08-15
+ */
+public class ProjectSignatureIndex implements org.industrial.ontology.kernel.api.index.ProjectSignatureIndex, DependentIndex {
+
+    @Nonnull
+    private final ProjectOntologiesIndex projectOntologiesIndex;
+
+    @Nonnull
+    private final OntologySignatureIndex ontologySignatureIndex;
+
+    public ProjectSignatureIndex(@Nonnull ProjectOntologiesIndex projectOntologiesIndex,
+                                     @Nonnull OntologySignatureIndex ontologySignatureIndex) {
+        this.projectOntologiesIndex = checkNotNull(projectOntologiesIndex);
+        this.ontologySignatureIndex = checkNotNull(ontologySignatureIndex);
+    }
+
+    @Nonnull
+    @Override
+    public Collection<Index> getDependencies() {
+        return List.of(projectOntologiesIndex, ontologySignatureIndex);
+    }
+
+    @Nonnull
+    @Override
+    public Stream<OWLEntity> getSignature() {
+        return projectOntologiesIndex.getOntologyIds()
+                .flatMap(ontologySignatureIndex::getEntitiesInSignature);
+    }
+}

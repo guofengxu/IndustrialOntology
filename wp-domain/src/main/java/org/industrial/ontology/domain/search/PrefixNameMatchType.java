@@ -1,0 +1,22 @@
+package org.industrial.ontology.domain.search;
+
+
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.shared.search.PrefixNameMatchType}.
+ * <p>
+ * Author: Matthew Horridge<br>
+ * Stanford University<br>
+ * Bio-Medical Informatics Research Group<br>
+ * Date: 14/11/2013
+ *
+ */
+public enum PrefixNameMatchType {
+
+    // The order is important!
+
+    NOT_IN_PREFIX_NAME,
+
+    IN_PREFIX_NAME
+
+}

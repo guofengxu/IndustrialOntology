@@ -1,0 +1,20 @@
+package org.industrial.ontology.domain.download;
+
+
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.shared.download.ProjectDownloadConstants}.
+ * <p>
+ * Author: Matthew Horridge<br>
+ * Stanford University<br>
+ * Bio-Medical Informatics Research Group<br>
+ * Date: 06/06/2012
+ */
+public class ProjectDownloadConstants {
+
+    public static final String PROJECT = "project";
+
+    public static final String REVISION = "revision";
+
+    public static final String FORMAT = "format";
+}

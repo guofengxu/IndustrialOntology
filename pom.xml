@@ -51,6 +51,15 @@
         <binaryowl.version>2.0.1</binaryowl.version>
         <lucene.version>9.12.3</lucene.version>
         <guava.version>33.4.8-jre</guava.version>
+        <jsr305.version>3.0.2</jsr305.version>
+        <!--
+          AutoValue stays only for legacy value classes that extend an abstract base class
+          (records cannot extend classes); everything else is ported to records (docs/01 §4).
+        -->
+        <auto-value.version>1.11.0</auto-value.version>
+        <protege-owlapi-extensions.version>4.0.0</protege-owlapi-extensions.version>
+        <commons-io.version>2.19.0</commons-io.version>
+        <commons-math3.version>3.6.1</commons-math3.version>
 
         <!-- Build plugins -->
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
@@ -76,6 +85,9 @@
           shows up anywhere in its dependency tree.
         -->
         <wp.spring-ai.allowed>false</wp.spring-ai.allowed>
+
+        <!-- javac's default; raise with -Dwp.javac.maxerrs=... when triaging large changes. -->
+        <wp.javac.maxerrs>100</wp.javac.maxerrs>
     </properties>
 
     <dependencyManagement>
@@ -151,6 +163,49 @@
                 <artifactId>owlapi-distribution</artifactId>
                 <version>${owlapi.version}</version>
             </dependency>
+            <!-- Model interfaces + data factory only: what wp-domain may use (docs/01 §1). -->
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-api</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-impl</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <!-- Parsers, renderers and OWLManager for the kernel (same set as legacy webprotege-server-core). -->
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-apibinding</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>${jsr305.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auto.value</groupId>
+                <artifactId>auto-value-annotations</artifactId>
+                <version>${auto-value.version}</version>
+            </dependency>
+            <!-- Class hierarchy helpers (TerminalElementFinder, ChildClassExtractor), as in legacy server-core. -->
+            <dependency>
+                <groupId>edu.stanford.protege</groupId>
+                <artifactId>protege-owlapi-extensions</artifactId>
+                <version>${protege-owlapi-extensions.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-math3</artifactId>
+                <version>${commons-math3.version}</version>
+            </dependency>
             <dependency>
                 <groupId>net.sourceforge.owlapi</groupId>
                 <artifactId>binaryowl</artifactId>
@@ -208,6 +263,12 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Tests ported from the legacy repository assert with Hamcrest matchers. -->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -230,6 +291,10 @@
                     <configuration>
                         <release>${maven.compiler.release}</release>
                         <parameters>true</parameters>
+                        <compilerArgs>
+                            <arg>-Xmaxerrs</arg>
+                            <arg>${wp.javac.maxerrs}</arg>
+                        </compilerArgs>
                     </configuration>
                 </plugin>
                 <plugin>

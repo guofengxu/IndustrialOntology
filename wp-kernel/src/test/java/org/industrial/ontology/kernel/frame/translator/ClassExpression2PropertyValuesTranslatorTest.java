@@ -1,0 +1,199 @@
+package org.industrial.ontology.kernel.frame.translator;
+
+import com.google.common.collect.ImmutableSet;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import java.util.Collection;
+import java.util.Collections;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.Mockito.mock;
+import org.industrial.ontology.domain.frame.PlainPropertyClassValue;
+import org.industrial.ontology.domain.frame.PlainPropertyDatatypeValue;
+import org.industrial.ontology.domain.frame.PlainPropertyIndividualValue;
+import org.industrial.ontology.domain.frame.PlainPropertyLiteralValue;
+import org.industrial.ontology.domain.frame.PlainPropertyValue;
+import org.industrial.ontology.domain.frame.State;
+import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataMinCardinalityImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataHasValueImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLDatatypeImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectSomeValuesFromImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectMinCardinalityImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectIntersectionOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataSomeValuesFromImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplString;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataExactCardinalityImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataPropertyImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectHasValueImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectExactCardinalityImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectAllValuesFromImpl;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.server.frame.translator.ClassExpression2PropertyValuesTranslator_TestCase}.
+ * <p>
+ * Matthew Horridge
+ * Stanford Center for Biomedical Informatics Research
+ * 2019-08-13
+ */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class ClassExpression2PropertyValuesTranslatorTest {
+
+    private final OWLObjectPropertyImpl objectProperty = new OWLObjectPropertyImpl(mock(IRI.class));
+
+    private final OWLClassImpl cls = new OWLClassImpl(mock(IRI.class)), otherCls = new OWLClassImpl(mock(IRI.class));
+
+    private final State initialStateAsserted = State.ASSERTED;
+
+    private OWLNamedIndividual ind = new OWLNamedIndividualImpl(mock(IRI.class));
+
+    private OWLDataProperty dataProperty = new OWLDataPropertyImpl(mock(IRI.class));
+
+    private OWLDatatype datatype = new OWLDatatypeImpl(mock(IRI.class));
+
+    private OWLLiteral literal = new OWLLiteralImplString("Hello");
+
+    @BeforeEach
+    public void setUp() {
+    }
+
+    @Test
+    public void shouldTranslateObjectSomeValuesFrom() {
+        var classExpression = new OWLObjectSomeValuesFromImpl(objectProperty, cls);
+        var expectedPropertyValue = PlainPropertyClassValue.get(objectProperty, cls, initialStateAsserted);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateDataSomeValuesFrom() {
+        var classExpression = new OWLDataSomeValuesFromImpl(dataProperty, datatype);
+        var expectedPropertyValue = PlainPropertyDatatypeValue.get(dataProperty, datatype, initialStateAsserted);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateObjectHasValue() {
+        var classExpression = new OWLObjectHasValueImpl(objectProperty, ind);
+        var expectedPropertyValue = PlainPropertyIndividualValue.get(objectProperty, ind, initialStateAsserted);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateDataHasValue() {
+        var classExpression = new OWLDataHasValueImpl(dataProperty, literal);
+        var expectedPropertyValue = PlainPropertyLiteralValue.get(dataProperty, literal, initialStateAsserted);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateObjectMinCardinality1() {
+        var classExpression = new OWLObjectMinCardinalityImpl(objectProperty, 1, cls);
+        var expectedPropertyValue = PlainPropertyClassValue.get(objectProperty, cls, initialStateAsserted);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateObjectMinCardinalityN() {
+        var classExpression = new OWLObjectMinCardinalityImpl(objectProperty, 2, cls);
+        var expectedPropertyValue = PlainPropertyClassValue.get(objectProperty, cls, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateObjectExactCardinality1() {
+        var classExpression = new OWLObjectExactCardinalityImpl(objectProperty, 1, cls);
+        var expectedPropertyValue = PlainPropertyClassValue.get(objectProperty, cls, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateObjectExactCardinalityN() {
+        var classExpression = new OWLObjectExactCardinalityImpl(objectProperty, 2, cls);
+        var expectedPropertyValue = PlainPropertyClassValue.get(objectProperty, cls, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateDataMinCardinality1() {
+        var classExpression = new OWLDataMinCardinalityImpl(dataProperty, 1, datatype);
+        var expectedPropertyValue = PlainPropertyDatatypeValue.get(dataProperty, datatype, initialStateAsserted);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateDataMinCardinalityN() {
+        var classExpression = new OWLDataMinCardinalityImpl(dataProperty, 2, datatype);
+        var expectedPropertyValue = PlainPropertyDatatypeValue.get(dataProperty, datatype, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateDataExactCardinality1() {
+        var classExpression = new OWLDataExactCardinalityImpl(dataProperty, 1, datatype);
+        var expectedPropertyValue = PlainPropertyDatatypeValue.get(dataProperty, datatype, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldTranslateDataExactCardinalityN() {
+        var classExpression = new OWLDataExactCardinalityImpl(dataProperty, 2, datatype);
+        var expectedPropertyValue = PlainPropertyDatatypeValue.get(dataProperty, datatype, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpression, initialStateAsserted, expectedPropertyValue);
+    }
+
+    @Test
+    public void shouldNotTranslateObjectAllValuesFrom() {
+        var property = new OWLObjectPropertyImpl(mock(IRI.class));
+        var filler = new OWLClassImpl(mock(IRI.class));
+        var classExpression = new OWLObjectAllValuesFromImpl(property, filler);
+        assertThatExpressionIsTranslatedAsTheEmptySet(classExpression);
+    }
+
+    @Test
+    public void shouldDecomposeObjectIntersectionOfAtTopLevel() {
+        var subExpressionA = new OWLObjectSomeValuesFromImpl(objectProperty, cls);
+        var subExpressionB = new OWLDataSomeValuesFromImpl(dataProperty, datatype);
+        var classExpresion = new OWLObjectIntersectionOfImpl(ImmutableSet.of(subExpressionA, subExpressionB));
+        var expectedA = PlainPropertyClassValue.get(objectProperty, cls, State.DERIVED);
+        var expectedB = PlainPropertyDatatypeValue.get(dataProperty, datatype, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpresion, State.ASSERTED, ImmutableSet.of(expectedA, expectedB));
+    }
+
+    @Test
+    public void shouldDecomposeObjectIntersectionOfAtFiller() {
+        var filler = new OWLObjectIntersectionOfImpl(ImmutableSet.of(cls, otherCls));
+        var classExpresion = new OWLObjectSomeValuesFromImpl(objectProperty, filler);
+        var expectedA = PlainPropertyClassValue.get(objectProperty, cls, State.DERIVED);
+        var expectedB = PlainPropertyClassValue.get(objectProperty, otherCls, State.DERIVED);
+        assertThatClassExpressionIsTranslatedAs(classExpresion, State.ASSERTED, ImmutableSet.of(expectedA, expectedB));
+    }
+
+    private void assertThatClassExpressionIsTranslatedAs(OWLClassExpression classExpression, State expectedState, PlainPropertyValue expectedPropertyValues) {
+        assertThatClassExpressionIsTranslatedAs(classExpression, expectedState, Collections.singleton(expectedPropertyValues));
+    }
+
+    private void assertThatExpressionIsTranslatedAsTheEmptySet(OWLClassExpression classExpression) {
+        var translated = new ClassExpression2PropertyValuesTranslator().translate(State.ASSERTED, classExpression);
+        assertThat(translated.isEmpty(), Matchers.is(true));
+    }
+
+    private void assertThatClassExpressionIsTranslatedAs(OWLClassExpression classExpression, State expectedState, Collection<? extends PlainPropertyValue> expectedPropertyValues) {
+        var translator = new ClassExpression2PropertyValuesTranslator();
+        var translated = translator.translate(expectedState, classExpression);
+        assertThat(translated, containsInAnyOrder(expectedPropertyValues.toArray()));
+    }
+}
