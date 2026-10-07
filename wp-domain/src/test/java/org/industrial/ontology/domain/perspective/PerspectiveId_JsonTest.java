@@ -1,0 +1,38 @@
+package org.industrial.ontology.domain.perspective;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.shared.perspective.PerspectiveId_Json_TestCase}.
+ * <p>
+ * Matthew Horridge
+ * Stanford Center for Biomedical Informatics Research
+ * 29 Aug 2018
+ */
+public class PerspectiveId_JsonTest {
+
+    private static final String ID = "12345678-1234-1234-1234-123456789abc";
+
+    private PerspectiveId perspectiveId;
+
+    @BeforeEach
+    public void setUp() throws Exception {
+        perspectiveId = PerspectiveId.get(ID);
+    }
+
+    @Test
+    public void shouldSerializeJson() throws Exception {
+        String result = new ObjectMapper().writeValueAsString(perspectiveId);
+        assertThat(result, is("\"" + ID + "\""));
+    }
+
+    @Test
+    public void shouldDeserializeJson() throws Exception {
+        PerspectiveId perspectiveId = new ObjectMapper().readerFor(PerspectiveId.class).readValue("\"" + ID + "\"");
+        assertThat(perspectiveId, is(this.perspectiveId));
+    }
+}

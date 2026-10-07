@@ -1,0 +1,25 @@
+package org.industrial.ontology.domain.form.data;
+
+
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.shared.form.data.PrimitiveFormControlDataMatchCriteriaVisitor}.
+ * <p>
+ * Matthew Horridge
+ * Stanford Center for Biomedical Informatics Research
+ * 2020-06-16
+ */
+public interface PrimitiveFormControlDataMatchCriteriaVisitor<R> {
+
+    default R visit(EntityFormControlDataMatchCriteria entityFormControlDataMatchCriteria) {
+        return null;
+    };
+
+    default R visit(LiteralFormControlDataMatchCriteria literalFormControlDataMatchCriteria) {
+        return null;
+    };
+
+    default R visit(CompositePrimitiveFormControlDataMatchCriteria compositePrimitiveFormControlDataMatchCriteria) {
+        return null;
+    };
+}
