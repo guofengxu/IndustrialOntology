@@ -9,6 +9,7 @@
 | 04 | 治理与 AI 模块 | P3/P4 设计 |
 | 05 | 任务拆分与验收 | **任务入口**：每个任务的依赖、产出与验收 |
 | 06 | v0.4 方案修订建议 | 对上层方案的修订 |
+| 07 | 后端移植工作项清单 | 按 01 拆出的工作项及完成状态（核对于 2026-10-07） |
 
 - 上游设计提案：[`IndustrialOntology-design-proposal.md`](IndustrialOntology-design-proposal.md)（D1–D8 已确认）
 
