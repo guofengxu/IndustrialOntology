@@ -1,8 +1,7 @@
 package org.industrial.ontology.domain.renderer;
 
-
-
 import org.semanticweb.owlapi.model.OWLObject;
+
 /**
  * Ported from {@code edu.stanford.bmir.protege.web.shared.renderer.HasHtmlBrowserText}.
  * <p>

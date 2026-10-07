@@ -1,6 +1,5 @@
 package org.industrial.ontology.domain.form.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.industrial.ontology.domain.form.field.NumberControlDescriptor;
@@ -17,14 +16,14 @@ import java.util.Objects;
  * Stanford Center for Biomedical Informatics Research
  * 2020-01-08
  */
-public record NumberControlData(@Nonnull NumberControlDescriptor descriptor, @JsonProperty("value") @Nullable OWLLiteral valueInternal) implements FormControlData {
+public record NumberControlData(@JsonProperty("descriptor") @Nonnull NumberControlDescriptor descriptor, @JsonProperty("value") @Nullable OWLLiteral valueInternal) implements FormControlData {
 
     public NumberControlData {
         Objects.requireNonNull(descriptor, "Null descriptor");
     }
 
-    @JsonCreator
-    public static NumberControlData get(@Nonnull NumberControlDescriptor descriptor, @Nullable OWLLiteral value) {
+    public static NumberControlData get(@JsonProperty("descriptor") @Nonnull NumberControlDescriptor descriptor,
+                                        @JsonProperty("value") @Nullable OWLLiteral value) {
         return new NumberControlData(descriptor, value);
     }
 

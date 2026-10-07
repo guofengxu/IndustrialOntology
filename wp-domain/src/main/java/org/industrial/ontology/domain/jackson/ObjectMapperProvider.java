@@ -1,7 +1,5 @@
 package org.industrial.ontology.domain.jackson;
 
-
-
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +12,6 @@ import org.industrial.ontology.domain.form.data.PrimitiveFormControlData;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 import javax.annotation.Nonnull;
 import org.semanticweb.owlapi.model.OWLDatatype;
-
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -69,14 +66,12 @@ public class ObjectMapperProvider implements Supplier<ObjectMapper> {
         module.addDeserializer(OWLDatatype.class, new OWLEntityDeserializer<>(dataFactory, OWLDatatype.class));
         module.addDeserializer(OWLClass.class, new OWLClassDeserializer(dataFactory));
         module.addDeserializer(IRI.class, new IriDeserializer());
-        module.addDeserializer(OWLAnnotationValue.class, new OWLAnnotationValueDeserializer(new OWLLiteralDeserializer(dataFactory),
-                                                                                            new IriDeserializer()));
+        module.addDeserializer(OWLAnnotationValue.class, new OWLAnnotationValueDeserializer(new OWLLiteralDeserializer(dataFactory), new IriDeserializer()));
         module.addSerializer(OWLLiteral.class, new OWLLiteralSerializer());
         module.addDeserializer(OWLLiteral.class, new OWLLiteralDeserializer(dataFactory));
         module.addDeserializer(PrimitiveFormControlData.class, new FormControlValueDeserializer(dataFactory));
         module.addSerializer(IRI.class, new IriSerializer());
         mapper.registerModule(module);
-
         return mapper;
     }
 }

@@ -1,6 +1,5 @@
 package org.industrial.ontology.domain.form.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.industrial.ontology.domain.form.field.EntityNameControlDescriptor;
@@ -17,14 +16,14 @@ import java.util.Objects;
  * Stanford Center for Biomedical Informatics Research
  * 2020-01-08
  */
-public record EntityNameControlData(@Nonnull EntityNameControlDescriptor descriptor, @Nullable @JsonProperty("entity") OWLEntity entityInternal) implements FormControlData {
+public record EntityNameControlData(@JsonProperty("descriptor") @Nonnull EntityNameControlDescriptor descriptor, @Nullable @JsonProperty("entity") OWLEntity entityInternal) implements FormControlData {
 
     public EntityNameControlData {
         Objects.requireNonNull(descriptor, "Null descriptor");
     }
 
-    @JsonCreator
-    public static EntityNameControlData get(@JsonProperty("descriptor") @Nonnull EntityNameControlDescriptor descriptor, @Nullable OWLEntity entity) {
+    public static EntityNameControlData get(@JsonProperty("descriptor") @Nonnull EntityNameControlDescriptor descriptor,
+                                            @JsonProperty("entity") @Nullable OWLEntity entity) {
         return new EntityNameControlData(descriptor, entity);
     }
 

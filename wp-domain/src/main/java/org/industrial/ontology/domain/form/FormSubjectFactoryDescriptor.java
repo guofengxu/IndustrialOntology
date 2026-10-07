@@ -1,7 +1,8 @@
 package org.industrial.ontology.domain.form;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.semanticweb.owlapi.model.EntityType;
 import org.semanticweb.owlapi.model.IRI;
@@ -14,11 +15,19 @@ import java.util.Objects;
 /**
  * Ported from {@code edu.stanford.bmir.protege.web.shared.form.FormSubjectFactoryDescriptor}.
  * <p>
+ * Getter auto-detection is off so that the JSON keeps the legacy shape ({@code entityType}, {@code parent},
+ * {@code targetOntologyIri}). The legacy {@code *Internal} getters were protected and therefore invisible to Jackson;
+ * as record accessors they are public. Hiding {@link #getParent()} with {@code @JsonIgnore} instead would mark the
+ * whole {@code parent} property as ignored and drop it on deserialization.
+ * <p>
  * Matthew Horridge
  * Stanford Center for Biomedical Informatics Research
  * 2019-11-11
  */
-public record FormSubjectFactoryDescriptor(@Nonnull EntityType<?> entityType, @JsonProperty("parent") @Nullable OWLClass parentInternal, @Nullable IRI targetOntologyIriInternal) {
+@JsonAutoDetect(getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
+public record FormSubjectFactoryDescriptor(@JsonProperty("entityType") @Nonnull EntityType<?> entityType,
+                                           @JsonProperty("parent") @Nullable OWLClass parentInternal,
+                                           @Nullable IRI targetOntologyIriInternal) {
 
     public FormSubjectFactoryDescriptor {
         Objects.requireNonNull(entityType, "Null entityType");
@@ -37,12 +46,12 @@ public record FormSubjectFactoryDescriptor(@Nonnull EntityType<?> entityType, @J
      * Gets a list of parents that can be used to position the fresh entity in
      * a hierarchy
      */
-    @JsonIgnore
     @Nonnull
     public Optional<OWLClass> getParent() {
         return Optional.ofNullable(getParentInternal());
     }
 
+    @JsonProperty("targetOntologyIri")
     @Nonnull
     public Optional<IRI> getTargetOntologyIri() {
         return Optional.ofNullable(getTargetOntologyIriInternal());

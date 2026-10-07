@@ -1,0 +1,23 @@
+package org.industrial.ontology.domain.event;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.industrial.ontology.domain.core.ProjectId;
+import org.industrial.ontology.domain.core.UserId;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+
+import java.util.Objects;
+
+/**
+ * Ported from {@code edu.stanford.bmir.protege.web.shared.event.ObjectPropertyFrameChangedEvent}.
+ */
+@JsonTypeName("ObjectPropertyFrameChanged")
+public record ObjectPropertyFrameChangedEvent(@JsonProperty("entity") OWLObjectProperty entity,
+        @JsonProperty("projectId") ProjectId projectId,
+        @JsonProperty("userId") UserId userId) implements EntityFrameChangedEvent<OWLObjectProperty> {
+
+    public ObjectPropertyFrameChangedEvent {
+        Objects.requireNonNull(entity, "entity");
+        Objects.requireNonNull(projectId, "projectId");
+    }
+}
