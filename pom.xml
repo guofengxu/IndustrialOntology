@@ -57,6 +57,9 @@
           (records cannot extend classes); everything else is ported to records (docs/01 §4).
         -->
         <auto-value.version>1.11.0</auto-value.version>
+        <protege-owlapi-extensions.version>4.0.0</protege-owlapi-extensions.version>
+        <commons-io.version>2.19.0</commons-io.version>
+        <commons-math3.version>3.6.1</commons-math3.version>
 
         <!-- Build plugins -->
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
@@ -82,6 +85,9 @@
           shows up anywhere in its dependency tree.
         -->
         <wp.spring-ai.allowed>false</wp.spring-ai.allowed>
+
+        <!-- javac's default; raise with -Dwp.javac.maxerrs=... when triaging large changes. -->
+        <wp.javac.maxerrs>100</wp.javac.maxerrs>
     </properties>
 
     <dependencyManagement>
@@ -184,6 +190,22 @@
                 <artifactId>auto-value-annotations</artifactId>
                 <version>${auto-value.version}</version>
             </dependency>
+            <!-- Class hierarchy helpers (TerminalElementFinder, ChildClassExtractor), as in legacy server-core. -->
+            <dependency>
+                <groupId>edu.stanford.protege</groupId>
+                <artifactId>protege-owlapi-extensions</artifactId>
+                <version>${protege-owlapi-extensions.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-math3</artifactId>
+                <version>${commons-math3.version}</version>
+            </dependency>
             <dependency>
                 <groupId>net.sourceforge.owlapi</groupId>
                 <artifactId>binaryowl</artifactId>
@@ -269,6 +291,10 @@
                     <configuration>
                         <release>${maven.compiler.release}</release>
                         <parameters>true</parameters>
+                        <compilerArgs>
+                            <arg>-Xmaxerrs</arg>
+                            <arg>${wp.javac.maxerrs}</arg>
+                        </compilerArgs>
                     </configuration>
                 </plugin>
                 <plugin>
