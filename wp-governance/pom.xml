@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.industrial.ontology</groupId>
+        <artifactId>industrial-ontology-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>wp-governance</artifactId>
+    <name>wp-governance</name>
+    <description>P3: version tags, diff/rollback, release validation StateGraph, model registry.</description>
+
+    <properties>
+        <wp.spring-ai.allowed>true</wp.spring-ai.allowed>
+    </properties>
+
+    <!-- The only place spring-ai-alibaba-bom may be imported (docs/00 §2). -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-bom</artifactId>
+                <version>${spring-ai-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-app</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-layering</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.industrial.ontology:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>org.industrial.ontology:wp-domain</include>
+                                        <include>org.industrial.ontology:wp-kernel-api</include>
+                                        <include>org.industrial.ontology:wp-kernel</include>
+                                        <include>org.industrial.ontology:wp-app</include>
+                                    </includes>
+                                    <message>Layering: server -> api/integration/governance/ai -> app -> kernel -> kernel-api -> domain (docs/00 §2). wp-governance may depend on wp-app and below only.</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

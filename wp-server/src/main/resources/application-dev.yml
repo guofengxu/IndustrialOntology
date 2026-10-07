@@ -1,0 +1,7 @@
+# Local development profile (docs/00 §9):
+#   mvn -pl wp-server spring-boot:run -Dspring-boot.run.profiles=dev
+# Infrastructure comes from deploy/docker-compose.dev.yml (mongo :27017, keycloak :8180).
+webprotege:
+  data-directory: ${WP_DATA_DIR:./.data}
+  auth:
+    local-login.enabled: true

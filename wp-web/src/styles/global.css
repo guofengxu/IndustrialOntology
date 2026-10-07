@@ -1,0 +1,27 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100%;
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 24px;
+}
+
+.app-shell__title.ant-typography {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.app-shell__content {
+  padding: 24px;
+}

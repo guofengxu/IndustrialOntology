@@ -1,0 +1,14 @@
+---
+description: WebProtégé NG 开发规则
+alwaysApply: true
+---
+1. 任务入口是 docs/05-任务拆分与验收.md；每个任务只做其"产出"列出的文件，不顺手重构无关代码。
+2. 依赖方向：server → api/integration/governance/ai → app → kernel → kernel-api → domain。违反即失败。
+3. wp-kernel*、wp-domain、wp-app、wp-api 禁止依赖 spring-ai-alibaba / spring-ai。
+4. 本体公理只经 ChangeManager.applyChanges 写入；读只走索引；Mongo 不存公理。
+5. 项目级对象（索引、ChangeManager、RevisionStore、Lucene、EventManager）不是 Spring bean，由 ProjectContextFactory 构造。
+6. 新增 REST 端点必须：OpenAPI 注解、权限动作声明、Problem JSON 错误、至少一个 WebMvcTest。
+7. 迁移自旧仓库的代码保留原类名（去掉 Impl 后缀除外）并在 Javadoc 首行注明 `Ported from edu.stanford...`。
+8. 前端：Portlet 必须在 src/portlets/registry.ts 注册，id 与 docs/03 的清单一致。
+9. 不做：OBO、Collections、Slack、CSV 导入、GWT 兼容层。
+10. 每个任务结束运行 `mvn -q verify -pl <module> -am` 与 `pnpm -C wp-web test`，输出贴进 PR。
