@@ -52,12 +52,6 @@
             <groupId>com.google.auto.value</groupId>
             <artifactId>auto-value-annotations</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
