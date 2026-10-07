@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import javax.annotation.Nonnull;
+import java.util.function.Supplier;
 
 /**
  * Hand-written replacement for the {@code @AutoFactory}-generated factory of {@link IriReplacer}.
@@ -12,13 +13,13 @@ import javax.annotation.Nonnull;
  */
 public final class IriReplacerFactory {
 
-    private final OWLDataFactory dataFactory;
+    private final Supplier<OWLDataFactory> dataFactory;
 
-    public IriReplacerFactory(OWLDataFactory dataFactory) {
+    public IriReplacerFactory(Supplier<OWLDataFactory> dataFactory) {
         this.dataFactory = java.util.Objects.requireNonNull(dataFactory);
     }
 
     public IriReplacer create(@Nonnull ImmutableMap<IRI, IRI> iriMap) {
-        return new IriReplacer(dataFactory, iriMap);
+        return new IriReplacer(dataFactory.get(), iriMap);
     }
 }
