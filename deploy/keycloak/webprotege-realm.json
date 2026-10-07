@@ -1,0 +1,86 @@
+{
+  "realm": "webprotege",
+  "displayName": "IndustrialOntology",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "webprotege-admin",
+        "description": "Mapped to SYSTEM_ADMIN by the application (webprotege.auth.admin-realm-role)."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "webprotege-web",
+      "name": "IndustrialOntology web client",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*", "http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:5173", "http://localhost:8080"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "webprotege-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "webprotege-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "webprotege-api",
+      "name": "IndustrialOntology API (resource server)",
+      "enabled": true,
+      "bearerOnly": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@example.test",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Dev",
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
+      "realmRoles": ["webprotege-admin"]
+    },
+    {
+      "username": "editor",
+      "enabled": true,
+      "email": "editor@example.test",
+      "emailVerified": true,
+      "firstName": "Editor",
+      "lastName": "Dev",
+      "credentials": [{ "type": "password", "value": "editor", "temporary": false }]
+    },
+    {
+      "username": "viewer",
+      "enabled": true,
+      "email": "viewer@example.test",
+      "emailVerified": true,
+      "firstName": "Viewer",
+      "lastName": "Dev",
+      "credentials": [{ "type": "password", "value": "viewer", "temporary": false }]
+    }
+  ]
+}

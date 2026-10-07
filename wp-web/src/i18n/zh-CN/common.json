@@ -1,0 +1,21 @@
+{
+  "app": {
+    "shell": {
+      "title": "IndustrialOntology",
+      "language": "界面语言",
+      "languages": {
+        "zh-CN": "中文",
+        "en": "English"
+      }
+    },
+    "nav": {
+      "projects": "项目"
+    },
+    "placeholder": {
+      "notImplemented": "此页面将在任务 {{task}} 中实现。"
+    },
+    "errors": {
+      "notFound": "页面不存在。"
+    }
+  }
+}

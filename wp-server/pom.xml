@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.industrial.ontology</groupId>
+        <artifactId>industrial-ontology-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>wp-server</artifactId>
+    <name>wp-server</name>
+    <description>Executable Spring Boot application: main class, application.yml, packaged web assets.</description>
+
+    <properties>
+        <!-- Assembles wp-governance and wp-ai, so the spring-ai ban cannot apply here. -->
+        <wp.spring-ai.allowed>true</wp.spring-ai.allowed>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-integration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-governance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-ai</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <!-- build-info feeds info.app.version (replaces legacy application.version, docs/00 §8). -->
+                            <goal>build-info</goal>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-layering</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.industrial.ontology:wp-cli</exclude>
+                                    </excludes>
+                                    <message>wp-cli ships as a separate jar and must not be bundled into wp-server (docs/00 §2).</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

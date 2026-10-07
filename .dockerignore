@@ -1,0 +1,7 @@
+**/target/
+**/node_modules/
+wp-web/dist/
+.data/
+.git/
+.idea/
+*.iml

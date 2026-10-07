@@ -1,0 +1,33 @@
+# Maven
+target/
+.flattened-pom.xml
+
+# Local runtime data (dev profile points WP_DATA_DIR here)
+.data/
+
+# Frontend
+node_modules/
+wp-web/dist/
+wp-web/coverage/
+wp-web/test-results/
+wp-web/playwright-report/
+*.tsbuildinfo
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+!.env.example

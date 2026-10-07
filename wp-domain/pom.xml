@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.industrial.ontology</groupId>
+        <artifactId>industrial-ontology-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>wp-domain</artifactId>
+    <name>wp-domain</name>
+    <description>Pure DTOs (records): frames, form descriptors, match criteria, settings, events.</description>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-layering</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.industrial.ontology:*</exclude>
+                                        <exclude>org.springframework*:*</exclude>
+                                    </excludes>
+                                    <message>Layering: server -> api/integration/governance/ai -> app -> kernel -> kernel-api -> domain (docs/00 §2). wp-domain is pure DTOs: no internal modules, no Spring.</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

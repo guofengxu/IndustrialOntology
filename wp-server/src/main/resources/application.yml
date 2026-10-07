@@ -1,0 +1,33 @@
+# Skeleton from docs/00 §8. Legacy webprotege.properties mapping:
+#   data.directory       -> webprotege.data-directory
+#   project.dormant.time -> webprotege.project.dormant-time
+#   application.version  -> info.app.version (from build-info)
+spring:
+  application.name: IndustrialOntology
+  data.mongodb.uri: ${WP_MONGODB_URI:mongodb://localhost:27017/webprotege}
+  security.oauth2.resourceserver.jwt.issuer-uri: ${WP_OIDC_ISSUER:http://localhost:8180/realms/webprotege}
+  servlet.multipart.max-file-size: ${WP_MAX_UPLOAD:200MB}
+  mail:
+    host: ${WP_SMTP_HOST:}
+    port: ${WP_SMTP_PORT:587}
+    username: ${WP_SMTP_USER:}
+    password: ${WP_SMTP_PASSWORD:}
+webprotege:
+  data-directory: ${WP_DATA_DIR:/srv/webprotege}        # same layout as legacy data.directory
+  project.dormant-time: ${WP_PROJECT_DORMANT:PT1H}       # legacy project.dormant.time
+  events.retention: PT10M                                # legacy was 60s
+  events.max-batch: 200
+  auth:
+    api-key.enabled: true
+    local-login.enabled: ${WP_LOCAL_LOGIN:false}         # dev/admin fallback only
+    admin-realm-role: webprotege-admin                   # Keycloak realm role -> SYSTEM_ADMIN
+  compat:
+    legacy-data-api.enabled: true                        # /data/* compatibility layer, off after deprecation period
+    legacy-hash-routes.enabled: true
+  governance:
+    enabled: false                                       # switched on in P3
+  ai:
+    enabled: false                                       # switched on in P4
+management:
+  endpoints.web.exposure.include: health,info,metrics,prometheus
+  otlp.tracing.endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:}

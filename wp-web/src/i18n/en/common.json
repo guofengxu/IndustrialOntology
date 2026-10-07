@@ -1,0 +1,21 @@
+{
+  "app": {
+    "shell": {
+      "title": "IndustrialOntology",
+      "language": "Display language",
+      "languages": {
+        "zh-CN": "中文",
+        "en": "English"
+      }
+    },
+    "nav": {
+      "projects": "Projects"
+    },
+    "placeholder": {
+      "notImplemented": "This page will be delivered by task {{task}}."
+    },
+    "errors": {
+      "notFound": "Page not found."
+    }
+  }
+}
