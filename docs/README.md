@@ -9,9 +9,9 @@
 | 04 | 治理与 AI 模块 | P3/P4 设计 |
 | 05 | 任务拆分与验收 | **任务入口**：每个任务的依赖、产出与验收 |
 | 06 | v0.4 方案修订建议 | 对上层方案的修订 |
-| 07 | 后端移植工作项清单 | 按 01 拆出的工作项及完成状态（核对于 2026-10-07） |
+| 07 | 后端移植工作项清单 | 按 01 拆出的工作项、完成状态（2026-10-08 第四轮：S1、S2 已完成）与未完成项的实施阶段 S1–S10 |
 
 - 上游设计提案：[`IndustrialOntology-design-proposal.md`](IndustrialOntology-design-proposal.md)（D1–D8 已确认）
 
 - 架构决策记录：[`adr/`](adr/)（模板见 `adr/0000-template.md`）
-- 性能基线：`perf/`（P0 结束时生成 `P0-baseline.md`）
+- 性能基线：[`perf/P0-baseline.md`](perf/P0-baseline.md)（P0 退出标准：加载 50k 公理项目，新/旧比值 1.01）

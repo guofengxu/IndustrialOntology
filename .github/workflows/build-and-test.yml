@@ -32,6 +32,41 @@ jobs:
       - name: Build
         run: ./mvnw -B -ntp verify
 
+  # Compares the ported kernel with the legacy webprotege-server-core (docs/05 P0-03, P0-05, P0-06 and the P0
+  # performance baseline). The legacy jars are not on Maven Central, so they are built from the pinned commit.
+  legacy-compat:
+    name: legacy-compat (legacy kernel → ported kernel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: guofengxu/webprotege
+          ref: 543c30600666f6ab73fbc85cb9c977bace55e449
+          path: legacy-webprotege
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+          cache: maven
+      - name: Install legacy webprotege-server-core
+        run: ./mvnw -B -ntp -f legacy-webprotege/pom.xml -pl webprotege-server-core -am install -DskipTests -Dgwt.skipCompilation=true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install the kernel and its test fixtures
+        run: ./mvnw -B -ntp -pl wp-kernel -am install -DskipTests
+      - name: Compare kernels
+        run: ./mvnw -B -ntp -Plegacy-compat -pl wp-legacy-compat verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: legacy-compat-reports
+          path: |
+            wp-legacy-compat/target/compat-reports
+            wp-legacy-compat/target/perf
+
   web:
     name: web (lint → typecheck → test → build)
     runs-on: ubuntu-latest

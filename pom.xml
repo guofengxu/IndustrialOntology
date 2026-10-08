@@ -495,4 +495,19 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          Compares the ported kernel with the legacy one (docs/05 P0-03, P0-05, P0-06, P0 exit criterion).
+          wp-legacy-compat depends on edu.stanford.protege:webprotege-server-core, which is not published to Maven
+          Central: install it from the legacy repository first (see wp-legacy-compat/README.md and the legacy-compat
+          CI job), then run ./mvnw -Plegacy-compat -pl wp-legacy-compat -am verify.
+        -->
+        <profile>
+            <id>legacy-compat</id>
+            <modules>
+                <module>wp-legacy-compat</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>

@@ -1,0 +1,103 @@
+{
+  "formId" : "2f4d6b8a-1c3e-4a5b-8d7f-9e0a1b2c3d4e",
+  "label" : {
+    "zh" : "比萨",
+    "en" : "Pizza"
+  },
+  "subjectFactoryDescriptor" : null,
+  "fields" : [ {
+    "id" : "e3b1c9a4-5d63-4a8e-9f1e-0a7c2b6d4f10",
+    "owlBinding" : {
+      "type" : "PROPERTY",
+      "property" : {
+        "type" : "owl:AnnotationProperty",
+        "iri" : "http://www.w3.org/2000/01/rdf-schema#label"
+      },
+      "valuesCriteria" : null
+    },
+    "label" : {
+      "zh" : "标签",
+      "en" : "Label"
+    },
+    "fieldRun" : "START",
+    "formControlDescriptor" : {
+      "type" : "TEXT",
+      "placeholder" : { },
+      "stringType" : "SIMPLE_STRING",
+      "lineMode" : "SINGLE_LINE",
+      "pattern" : "",
+      "patternViolationErrorMessage" : { }
+    },
+    "repeatability" : "NON_REPEATABLE",
+    "optionality" : "REQUIRED",
+    "readOnly" : false,
+    "help" : { },
+    "initialExpansionState" : "EXPANDED"
+  }, {
+    "id" : "5a2f8d17-3c4b-4e9a-8b6d-1f0e2c3a4b5c",
+    "owlBinding" : {
+      "type" : "PROPERTY",
+      "property" : {
+        "type" : "owl:DatatypeProperty",
+        "iri" : "http://www.industrial-ontology.org/test/pizza#hasCalorificContentValue"
+      },
+      "valuesCriteria" : null
+    },
+    "label" : {
+      "zh" : "热量",
+      "en" : "Calories"
+    },
+    "fieldRun" : "START",
+    "formControlDescriptor" : {
+      "type" : "NUMBER",
+      "format" : "#",
+      "length" : 6,
+      "placeholder" : { },
+      "range" : {
+        "lowerBound" : 0.0,
+        "lowerBoundType" : "INCLUSIVE",
+        "upperBound" : 10000.0,
+        "upperBoundType" : "INCLUSIVE",
+        "anyNumber" : false
+      },
+      "widgetType" : "Plain"
+    },
+    "repeatability" : "NON_REPEATABLE",
+    "optionality" : "OPTIONAL",
+    "readOnly" : false,
+    "help" : { },
+    "initialExpansionState" : "EXPANDED"
+  }, {
+    "id" : "9c7e6b5a-4d3c-4b2a-9f8e-7d6c5b4a3f2e",
+    "owlBinding" : {
+      "type" : "PROPERTY",
+      "property" : {
+        "type" : "owl:ObjectProperty",
+        "iri" : "http://www.industrial-ontology.org/test/pizza#hasCountryOfOrigin"
+      },
+      "valuesCriteria" : null
+    },
+    "label" : {
+      "zh" : "原产国",
+      "en" : "Country of origin"
+    },
+    "fieldRun" : "START",
+    "formControlDescriptor" : {
+      "type" : "ENTITY_NAME",
+      "placeholder" : { },
+      "matchCriteria" : {
+        "match" : "CompositeCriteria",
+        "criteria" : [ {
+          "match" : "EntityTypeIsOneOf",
+          "types" : [ "owl:Class" ]
+        } ],
+        "matchType" : "ALL"
+      }
+    },
+    "repeatability" : "NON_REPEATABLE",
+    "optionality" : "OPTIONAL",
+    "readOnly" : false,
+    "help" : { },
+    "initialExpansionState" : "EXPANDED"
+  } ]
+}
