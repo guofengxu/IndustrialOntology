@@ -20,8 +20,10 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
  * Matthew Horridge
  * Stanford Center for Biomedical Informatics Research
  * 2020-04-02
+ * <p>
+ * Public, unlike the legacy class, so that {@code ProjectContextFactory} can wire it without Dagger.
  */
-class EquivalentClassesAxiom2PropertyValuesTranslator {
+public class EquivalentClassesAxiom2PropertyValuesTranslator {
 
     public EquivalentClassesAxiom2PropertyValuesTranslator(@Nonnull ClassExpression2PropertyValuesTranslator classExpression2PropertyValuesTranslator) {
         this.classExpression2PropertyValuesTranslator = classExpression2PropertyValuesTranslator;
