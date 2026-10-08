@@ -36,6 +36,7 @@ JAVA_HOME=<JDK 11> ./mvnw -B -f ../webprotege/pom.xml -pl webprotege-server-core
 | `IndexReplayConsistencyIT` | P0-05 | 同一 `change-data.binary` 分别由旧内核和新内核重放，`OntologyAxiomsIndex`、`ClassFrameAxiomsIndex`、`SubClassOfAxiomsBySubClassIndex`、`AnnotationAssertionAxiomsBySubjectIndex` 对全部签名实体的结果相同；另有一个反向用例，确认两份不同的历史会被报告为不同 |
 | `ClassHierarchyCompatibilityIT` | P0-06 | 类层级的根，以及每个类的子类、父类、祖先、是否叶子、到根的路径都与旧系统相同 |
 | `ProjectLoadBaselineIT` | P0 退出标准 | 加载 50k 公理项目的耗时不超过旧系统的 1.2 倍，结果见 `docs/perf/P0-baseline.md` |
+| `LegacyMongoDocumentsIT` | S4（07 文档 5.3-3） | `wp-app/src/test/resources/legacy-mongo/` 下 19 个集合的样本和 `indexes.json`，必须与旧持久化代码（Morphia 1.3.2、旧 Jackson `ObjectMapperProvider`、旧 `UserRecordConverter`、各仓库的 `ensureIndexes()`）现在写出的完全相同。`wp-app` 的 `LegacyMongoRoundTripIT` 再验证新仓库读写这些样本不变 |
 
 数据集：
 
@@ -44,6 +45,8 @@ JAVA_HOME=<JDK 11> ./mvnw -B -f ../webprotege/pom.xml -pl webprotege-server-core
 - **真实项目（可选）**：加上 `-Dwp.compat.projectDirectory=<旧系统项目目录>`，该目录下要有 `change-data/change-data.binary`。测试只复制这个文件到临时目录，不会修改原目录。没设置时这些用例会跳过。
 
 比较报告写在 `target/compat-reports/`，性能报告写在 `target/perf/`。
+
+改动 `LegacyMongoDocuments` 后，用 `-Dwp.compat.writeMongoSamples=true` 运行 `LegacyMongoDocumentsIT` 重新生成 Mongo 样本，再把 `wp-app/src/test/resources/legacy-mongo/` 的改动一起提交。旧版 Morphia 通过 cglib 生成代理类，在 JDK 17 上需要 `--add-opens java.base/java.lang=ALL-UNNAMED`，模块的 failsafe 配置已经加上。
 
 ## 3. 类路径说明
 

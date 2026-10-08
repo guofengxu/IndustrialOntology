@@ -1,0 +1,2 @@
+{"_id": "alice", "lastLogin": {"$date": {"$numberLong": "1650000000123"}}, "lastLogout": {"$date": {"$numberLong": "1600000000000"}}, "recentProjects": [{"projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "timestamp": {"$date": {"$numberLong": "1650000000123"}}}, {"projectId": "7c1f0e9d-8b2a-4d3c-a1e5-0f9e8d7c6b52", "timestamp": {"$date": {"$numberLong": "1600000000000"}}}]}
+{"_id": "bob", "lastLogin": {"$date": {"$numberLong": "0"}}, "lastLogout": {"$date": {"$numberLong": "0"}}, "recentProjects": []}

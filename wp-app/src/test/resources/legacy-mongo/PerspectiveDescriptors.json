@@ -1,0 +1,2 @@
+{"_id": {"$oid": "5f0c0c0c0c0c0c0c0c000006"}, "projectId": null, "userId": null, "perspectives": [{"perspectiveId": "69df8fa8-4f84-499e-9341-28eb5085c40b", "label": {"en": "Classes"}, "favorite": true}, {"perspectiveId": "0e1a2b3c-4d5e-4f60-8172-839405a6b7c8", "label": {"en": "Comments"}, "favorite": false}]}
+{"_id": {"$oid": "5f0c0c0c0c0c0c0c0c000007"}, "projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "userId": "alice", "perspectives": [{"perspectiveId": "69df8fa8-4f84-499e-9341-28eb5085c40b", "label": {"en": "Classes"}, "favorite": true}]}

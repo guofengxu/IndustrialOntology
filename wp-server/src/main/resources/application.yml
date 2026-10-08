@@ -15,6 +15,7 @@ spring:
     username: ${WP_SMTP_USER:}
     password: ${WP_SMTP_PASSWORD:}
 webprotege:
+  mongo.ensure-indexes: true                             # create missing legacy indexes at startup (MongoIndexes)
   data-directory: ${WP_DATA_DIR:/srv/webprotege}        # same layout as legacy data.directory
   project.dormant-time: ${WP_PROJECT_DORMANT:PT1H}       # legacy project.dormant.time
   events.retention: PT10M                                # legacy was 60s

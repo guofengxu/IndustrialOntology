@@ -1,1 +1,2 @@
 org.industrial.ontology.app.project.ProjectRuntimeAutoConfiguration
+org.industrial.ontology.app.persistence.MongoPersistenceAutoConfiguration

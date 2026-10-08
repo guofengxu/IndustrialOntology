@@ -1,0 +1,2 @@
+{"_id": "alice", "realName": "Alice Liddell", "emailAddress": "alice@example.org", "avatar": "https://example.org/avatars/alice.png", "salt": "000102030405060708090a0b0c0d0e0f", "saltedPasswordDigest": "deadbeef0123456789abcdef10325476"}
+{"_id": "bob", "realName": "Bob", "emailAddress": "", "salt": "000102030405060708090a0b0c0d0e0f", "saltedPasswordDigest": "deadbeef0123456789abcdef10325476"}

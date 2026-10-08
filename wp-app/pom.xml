@@ -35,9 +35,29 @@
             <optional>true</optional>
         </dependency>
 
+        <!--
+          Persistence (docs/01 §5.3): the legacy collections through Spring Data MongoDB. The starter also brings
+          Spring Boot's Mongo health indicator to applications that have the actuator (docs/01 §7).
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- MongoTestServer: a mongo:7 container where Docker runs, the in-memory wire-protocol server otherwise. -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.bwaldvogel</groupId>
+            <artifactId>mongo-java-server</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -57,6 +77,18 @@
 
     <build>
         <plugins>
+            <!-- Shares MongoTestServer and the legacy Mongo samples with the wp-server and wp-cli tests. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>

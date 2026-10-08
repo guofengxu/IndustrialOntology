@@ -1,0 +1,11 @@
+# wp-cli (docs/01 §8): a command-line run of the application context, no web server.
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+    log-startup-info: false
+  data.mongodb.uri: ${WP_MONGODB_URI:mongodb://localhost:27017/webprotege}   # same database as the server
+webprotege:
+  mongo.ensure-indexes: false   # migrate-mongo creates the indexes itself, and --dry-run must not change anything
+logging.level:
+  root: warn
