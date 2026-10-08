@@ -34,6 +34,14 @@
 | GET | `/api/v1/admin/users?q=` | USER_ADMIN | 用户列表（新功能） |
 | POST | `/api/v1/admin/permissions/rebuild` | REBUILD_PERMISSIONS | |
 
+已实现（S5，除 `permissions/rebuild` 随 `rebuild-permissions` 在 S6 实现外），与上表的差别和补充：
+- `applicationActions` 是动作 id（`EditApplicationSettings`、`CreateEmptyProject` 等，即 `BuiltInAction` 的 `ActionId`，与 `RoleAssignments.actionClosure` 中的字符串相同），按 id 排序；`email` 未知时为 `null`；`displayName` 是姓名，没有姓名时用用户名。Keycloak 管理员（realm 角色 `webprotege-admin`）的 `applicationActions` 包含 `SystemAdmin` 的全部动作，但不写入 `RoleAssignments`。
+- `POST /api/v1/me/api-keys` 的请求体为 `{purpose}`，`purpose` 为空时返回 400 `INVALID_REQUEST`。成功时返回 201、`Location` 和 `Cache-Control: no-store`，响应体为 `{apiKeyId, apiKey, purpose, createdAt}`；`createdAt` 是 ISO-8601 格式。`DELETE` 一个不属于自己或不存在的 Key 返回 404 `API_KEY_NOT_FOUND`。`POST` 和 `DELETE` 只接受 bearer 令牌，用 API Key 调用返回 403；`GET` 列表两种凭证都可以。
+- `/admin/settings` 的读和写都要求 `EDIT_APPLICATION_SETTINGS`（同旧 handler）。字段为 `{applicationName, systemNotificationEmailAddress, applicationLocation:{scheme,host,path,port}, accountCreationSetting, projectCreationSetting, projectUploadSetting, notificationEmailsSetting, maxUploadSize}`，旧 DTO 中始终为空的三个用户列表已去掉；任一字段缺失返回 400。`PUT` 返回保存后的设置。
+- `/admin/users` 要求 `VIEW_ANY_USER_DETAILS`（`USER_ADMIN` 及 `SYSTEM_ADMIN` 角色带有），按用户名包含 `q`（不区分大小写）查找，返回 `[{userId, displayName, email}]`，按用户名排序；`limit` 默认 50，最多 100。
+- 本地兜底登录（`webprotege.auth.local-login.enabled`）：`POST /login`，表单字段 `username`、`password`，返回 `{access_token, token_type: "Bearer", expires_in}`。用户名或密码错误返回 401 `BAD_CREDENTIALS`；同一用户名连续失败 5 次后，15 分钟内返回 429 `TOO_MANY_ATTEMPTS`；凭证放在查询串里返回 400。
+- 401 的 `code` 为 `UNAUTHENTICATED`，并带 `WWW-Authenticate: Bearer`。
+
 ---
 
 ## 3. 项目
