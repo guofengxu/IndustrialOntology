@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.industrial.ontology</groupId>
+        <artifactId>industrial-ontology-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>wp-legacy-compat</artifactId>
+    <name>wp-legacy-compat</name>
+    <description>
+        Tests only: replays the same data through the legacy webprotege-server-core and the ported wp-kernel and
+        compares the results (docs/05 P0-03, P0-05, P0-06, P0 exit criterion). Built only with -Plegacy-compat.
+    </description>
+
+    <properties>
+        <!-- Legacy baseline: guofengxu/webprotege master 543c306 (merge of feature/integration-ontology). -->
+        <webprotege.legacy.version>5.0.0-SNAPSHOT</webprotege.legacy.version>
+        <maven.install.skip>true</maven.install.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
+    <dependencies>
+        <!-- The ported kernel comes first, so its OWL API, Guava and Lucene versions win over the legacy ones. -->
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-kernel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-kernel</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+          The legacy kernel. Its Lucene 8 module is left out: the compared paths (revisions, indexes, hierarchies)
+          do not use it, and it would clash with the kernel's Lucene 9.
+        -->
+        <dependency>
+            <groupId>edu.stanford.protege</groupId>
+            <artifactId>webprotege-server-core</artifactId>
+            <version>${webprotege.legacy.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>edu.stanford.protege</groupId>
+                    <artifactId>webprotege-server-lucene</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-layering</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.industrial.ontology:*</exclude>
+                                        <exclude>org.springframework*:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>org.industrial.ontology:wp-domain</include>
+                                        <include>org.industrial.ontology:wp-kernel-api</include>
+                                        <include>org.industrial.ontology:wp-kernel</include>
+                                    </includes>
+                                    <message>wp-legacy-compat compares the kernel only: it may depend on wp-kernel and below, and never on Spring.</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
