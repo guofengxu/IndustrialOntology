@@ -1,5 +1,8 @@
 # Full stack (mongo + keycloak + app), built from the repository root.
 #   docker compose -f deploy/docker-compose.yml up -d --build
+# For local evaluation only: Keycloak runs in dev mode and imports the dev realm, whose users have their names as
+# passwords, and "admin" holds the realm role webprotege-admin, which the application maps to SystemAdmin
+# (docs/01 §6). A real deployment needs its own realm export without these users and real Keycloak secrets.
 name: industrial-ontology
 
 services:

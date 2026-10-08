@@ -8,14 +8,14 @@ import picocli.CommandLine.Spec;
 
 /**
  * The {@code wp-cli} command; the administration commands are its subcommands (docs/01 §8). S4 adds
- * {@code migrate-mongo}; {@code create-admin}, {@code generate-api-key}, {@code rebuild-permissions},
- * {@code set-permissions} and {@code reindex-lucene} follow in S5, S6 and S10.
+ * {@code migrate-mongo}, S5 {@code create-admin} and {@code generate-api-key}; {@code rebuild-permissions},
+ * {@code set-permissions} and {@code reindex-lucene} follow in S6 and S10.
  */
 @Component
 @Command(name = "wp-cli",
          mixinStandardHelpOptions = true,
          description = "Administration commands for the IndustrialOntology database and data directory.",
-         subcommands = {MigrateMongoCommand.class})
+         subcommands = {MigrateMongoCommand.class, CreateAdminCommand.class, GenerateApiKeyCommand.class})
 public class WebProtegeCommand implements Runnable {
 
     @Spec

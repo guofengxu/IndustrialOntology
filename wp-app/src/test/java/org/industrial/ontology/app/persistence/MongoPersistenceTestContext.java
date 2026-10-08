@@ -1,6 +1,7 @@
 package org.industrial.ontology.app.persistence;
 
 import com.mongodb.client.MongoDatabase;
+import org.industrial.ontology.app.access.AccessAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
@@ -8,6 +9,9 @@ import org.springframework.boot.context.annotation.Configurations;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A Spring context with Spring Boot's Mongo auto-configuration and {@link MongoPersistenceAutoConfiguration}, on a
@@ -24,14 +28,28 @@ public final class MongoPersistenceTestContext implements AutoCloseable {
     }
 
     public static MongoPersistenceTestContext start(String... properties) {
+        return start(List.of(), properties);
+    }
+
+    /**
+     * The persistence with the services of {@link AccessAutoConfiguration} on top: the access manager and the user,
+     * API key and application settings services.
+     */
+    public static MongoPersistenceTestContext startWithServices(String... properties) {
+        return start(List.of(AccessAutoConfiguration.class), properties);
+    }
+
+    private static MongoPersistenceTestContext start(List<Class<?>> moreAutoConfigurations, String... properties) {
         var context = new AnnotationConfigApplicationContext();
         TestPropertyValues.of("spring.data.mongodb.uri=" + MongoTestServer.uri(MongoTestServer.uniqueDatabase()))
                           .and(properties)
                           .applyTo(context);
         // In the order Spring Boot sorts them: the persistence configuration goes before MongoDataAutoConfiguration.
-        context.register(Configurations.getClasses(AutoConfigurations.of(MongoAutoConfiguration.class,
-                                                                         MongoDataAutoConfiguration.class,
-                                                                         MongoPersistenceAutoConfiguration.class)));
+        var autoConfigurations = new ArrayList<Class<?>>(List.of(MongoAutoConfiguration.class,
+                                                                 MongoDataAutoConfiguration.class,
+                                                                 MongoPersistenceAutoConfiguration.class));
+        autoConfigurations.addAll(moreAutoConfigurations);
+        context.register(Configurations.getClasses(AutoConfigurations.of(autoConfigurations.toArray(Class<?>[]::new))));
         context.refresh();
         return new MongoPersistenceTestContext(context);
     }

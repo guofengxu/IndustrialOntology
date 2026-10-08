@@ -154,7 +154,7 @@ class LegacyMongoRoundTripIT {
         assertThat(alice).isEqualTo(new UserRecordDocument("alice", "Alice Liddell", "alice@example.org",
                                                            "https://example.org/avatars/alice.png",
                                                            "000102030405060708090a0b0c0d0e0f",
-                                                           "deadbeef0123456789abcdef10325476"));
+                                                           "deadbeef0123456789abcdef10325476", null));
         assertThat(bob.getAvatarUrl()).isEmpty();
         assertThat(bob.emailAddress()).isEmpty();
 

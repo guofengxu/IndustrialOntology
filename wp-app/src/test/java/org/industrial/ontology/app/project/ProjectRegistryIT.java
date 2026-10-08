@@ -154,16 +154,26 @@ class ProjectRegistryIT {
         assertThat(context.lastAccess()).isEqualTo(lastUse);
     }
 
+    /**
+     * The test decides when the project becomes dormant: with the real clock and a one-second dormant time, a busy
+     * machine closed the project while the classes were still being written (the writes go to the context, not
+     * through the registry, so they do not count as use). That closing on time is
+     * {@link #shouldCloseProjectOnceItHasBeenDormantForTheDormantTime}.
+     */
     @Test
     void shouldReloadDormantProjectWithWhatItWroteBeforeItWasClosed() {
-        var registry = registry(DORMANT_TIME);
+        var ticker = new FakeTicker();
+        Queue<Runnable> deferred = new ConcurrentLinkedQueue<>();
+        var registry = registry(factory::create, ticker, deferred::add);
         var context = registry.get(projectId);
         var pizza = createClass(context, "Pizza", ImmutableSet.of());
         var margherita = createClass(context, "Margherita", ImmutableSet.of(pizza));
-        await().atMost(TIMEOUT).until(context::isClosed);
+        ticker.advance(DORMANT_TIME.multipliedBy(2));
 
         var reloaded = registry.get(projectId);
+        runAll(deferred);
 
+        assertThat(context.isClosed()).isTrue();
         assertThat(reloaded).isNotSameAs(context);
         assertThat(reloaded.isClosed()).isFalse();
         assertThat(reloaded.revisionManager().getRevisions()).hasSize(2);
@@ -201,12 +211,13 @@ class ProjectRegistryIT {
     @Test
     void shouldLoadProjectOnceWhenItIsRequestedConcurrently() throws Exception {
         var loads = new AtomicInteger();
+        // A clock that stands still: with the real one, a slow load outlasted the one-second dormant time.
         var registry = registry(id -> {
             loads.incrementAndGet();
             // Keeps the other requests waiting while the project loads
             sleep(Duration.ofMillis(300));
             return factory.create(id);
-        }, Ticker.systemTicker(), Runnable::run);
+        }, new FakeTicker(), Runnable::run);
         var requests = 16;
         var start = new CountDownLatch(1);
         var pool = Executors.newFixedThreadPool(requests);
@@ -235,11 +246,12 @@ class ProjectRegistryIT {
     @Test
     void shouldLoadDifferentProjectsAtTheSameTime() throws Exception {
         var bothLoading = new CyclicBarrier(2);
+        // A clock that stands still: with the real one, the first project went dormant on a slow run.
         var registry = registry(id -> {
             // Passes only if the other project is being loaded at the same time
             awaitBarrier(bothLoading);
             return factory.create(id);
-        }, Ticker.systemTicker(), Runnable::run);
+        }, new FakeTicker(), Runnable::run);
         var otherProjectId = ProjectKernelFixture.freshProjectId();
         var pool = Executors.newFixedThreadPool(2);
         try {

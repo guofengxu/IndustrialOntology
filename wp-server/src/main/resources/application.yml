@@ -7,7 +7,9 @@ server:
 spring:
   application.name: IndustrialOntology
   data.mongodb.uri: ${WP_MONGODB_URI:mongodb://localhost:27017/webprotege}
-  security.oauth2.resourceserver.jwt.issuer-uri: ${WP_OIDC_ISSUER:http://localhost:8180/realms/webprotege}
+  security.oauth2.resourceserver.jwt:
+    issuer-uri: ${WP_OIDC_ISSUER:http://localhost:8180/realms/webprotege}
+    audiences: ${WP_OIDC_AUDIENCE:webprotege-api}        # tokens must name the API (realm audience mapper)
   servlet.multipart.max-file-size: ${WP_MAX_UPLOAD:200MB}
   mail:
     host: ${WP_SMTP_HOST:}
@@ -23,9 +25,13 @@ webprotege:
   kernel:                                                # thread pools shared by all projects (KernelExecutors)
     index-update-threads: 10                             # legacy INDEX_UPDATING_THREADS
     revision-write-threads: 4
-  auth:
-    api-key.enabled: true
-    local-login.enabled: ${WP_LOCAL_LOGIN:false}         # dev/admin fallback only
+  auth:                                                  # docs/01 §6 (S5)
+    api-key:
+      enabled: true                                      # Authorization: ApiKey <key>
+      allow-query-parameter: true                        # ?apiKey= on GET /download only, for download links
+    local-login:
+      enabled: ${WP_LOCAL_LOGIN:false}                   # dev/admin fallback only: POST /login -> bearer token
+      token-ttl: PT8H
     admin-realm-role: webprotege-admin                   # Keycloak realm role -> SYSTEM_ADMIN
   compat:
     legacy-data-api.enabled: true                        # /data/* compatibility layer, off after deprecation period
