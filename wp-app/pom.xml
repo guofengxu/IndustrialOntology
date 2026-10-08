@@ -19,6 +19,40 @@
             <groupId>org.industrial.ontology</groupId>
             <artifactId>wp-kernel</artifactId>
         </dependency>
+
+        <!-- Project runtime (docs/01 §2, §3.4): auto-configuration, KernelExecutors, ProjectRegistry over Caffeine. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Kernel test fixtures (InMemoryProjectPorts, ProjectKernelFixture) for loading real projects. -->
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-kernel</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

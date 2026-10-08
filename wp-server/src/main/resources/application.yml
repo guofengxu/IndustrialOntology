@@ -2,6 +2,8 @@
 #   data.directory       -> webprotege.data-directory
 #   project.dormant.time -> webprotege.project.dormant-time
 #   application.version  -> info.app.version (from build-info)
+server:
+  shutdown: graceful                                     # requests finish, then ProjectRegistry.closeAll() (docs/01 §7)
 spring:
   application.name: IndustrialOntology
   data.mongodb.uri: ${WP_MONGODB_URI:mongodb://localhost:27017/webprotege}
@@ -17,6 +19,9 @@ webprotege:
   project.dormant-time: ${WP_PROJECT_DORMANT:PT1H}       # legacy project.dormant.time
   events.retention: PT10M                                # legacy was 60s
   events.max-batch: 200
+  kernel:                                                # thread pools shared by all projects (KernelExecutors)
+    index-update-threads: 10                             # legacy INDEX_UPDATING_THREADS
+    revision-write-threads: 4
   auth:
     api-key.enabled: true
     local-login.enabled: ${WP_LOCAL_LOGIN:false}         # dev/admin fallback only
