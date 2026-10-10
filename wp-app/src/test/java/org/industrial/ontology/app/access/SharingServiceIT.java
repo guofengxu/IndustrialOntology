@@ -27,10 +27,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.industrial.ontology.domain.core.BuiltInAction.EDIT_ONTOLOGY;
+import static org.industrial.ontology.domain.core.BuiltInAction.EDIT_SHARING_SETTINGS;
 import static org.industrial.ontology.domain.core.BuiltInAction.VIEW_PROJECT;
 import static org.industrial.ontology.domain.core.BuiltInRole.CAN_EDIT;
 import static org.industrial.ontology.domain.core.BuiltInRole.CAN_MANAGE;
 import static org.industrial.ontology.domain.core.BuiltInRole.CAN_VIEW;
+import static org.industrial.ontology.domain.core.BuiltInRole.SYSTEM_ADMIN;
 import static org.industrial.ontology.domain.sharing.SharingPermission.COMMENT;
 import static org.industrial.ontology.domain.sharing.SharingPermission.EDIT;
 import static org.industrial.ontology.domain.sharing.SharingPermission.MANAGE;
@@ -105,7 +107,7 @@ class SharingServiceIT {
         var project = ProjectResource.of(projectId);
 
         var stored = sharingService.setSharingSettings(ALICE, settings(Optional.of(VIEW),
-                                                                       share("carol@example.org", COMMENT),
+                                                                       share("carol", COMMENT),
                                                                        share("bob", EDIT),
                                                                        share("alice", MANAGE)));
 
@@ -157,6 +159,9 @@ class SharingServiceIT {
 
     @Test
     void theFirstSettingForAUserShouldCount() {
+        // So that the e-mail address is looked up
+        fixture.grantApplicationRoles(ALICE, SYSTEM_ADMIN);
+
         var stored = sharingService.setSharingSettings(ALICE, settings(Optional.empty(),
                                                                        share("alice", MANAGE),
                                                                        share("bob", EDIT),
@@ -164,6 +169,67 @@ class SharingServiceIT {
                                                                        share("bob@example.org", MANAGE)));
 
         assertThat(stored.getSharingSettings()).containsExactly(share("alice", MANAGE), share("bob", EDIT));
+    }
+
+    @Test
+    void theOwnerShouldKeepManageWhenACollaboratorLeavesTheOwnerOut() {
+        fixture.grantProjectRoles(BOB, projectId, CAN_MANAGE);
+
+        var stored = sharingService.setSharingSettings(BOB, settings(Optional.empty(), share("bob", MANAGE)));
+
+        assertThat(stored.getSharingSettings()).containsExactly(share("alice", MANAGE), share("bob", MANAGE));
+        assertThat(accessManager.hasPermission(Subject.forUser(ALICE), ProjectResource.of(projectId),
+                                               EDIT_SHARING_SETTINGS)).isTrue();
+    }
+
+    @Test
+    void nobodyShouldGiveTheOwnerLessThanManage() {
+        fixture.grantProjectRoles(BOB, projectId, CAN_MANAGE);
+        var before = sharingService.getSharingSettings(ALICE, projectId);
+
+        for (var caller : List.of(BOB, ALICE)) {
+            assertThatThrownBy(() -> sharingService.setSharingSettings(caller, settings(Optional.empty(),
+                                                                                        share("alice", VIEW),
+                                                                                        share("bob", MANAGE))))
+                    .isInstanceOf(WpException.class)
+                    .extracting("code", "status").containsExactly(SharingService.OWNER_ACCESS_REQUIRED, 400);
+        }
+        assertThat(sharingService.getSharingSettings(ALICE, projectId)).isEqualTo(before);
+    }
+
+    /**
+     * The stored settings show user names, so looking up an e-mail address would tell the caller whose it is.
+     */
+    @Test
+    void onlyUsersWhoMayViewAnyUsersDetailsShouldNameUsersByEmailAddress() {
+        var byEmailAddress = settings(Optional.empty(), share("alice", MANAGE), share("carol@example.org", COMMENT));
+        var before = sharingService.getSharingSettings(ALICE, projectId);
+
+        assertThatThrownBy(() -> sharingService.setSharingSettings(ALICE, byEmailAddress))
+                .isInstanceOf(WpException.class)
+                .hasMessage("No user has the name carol@example.org")
+                .extracting("code", "status").containsExactly(SharingService.USER_NOT_FOUND, 400);
+        assertThat(sharingService.getSharingSettings(ALICE, projectId)).isEqualTo(before);
+
+        fixture.grantApplicationRoles(ALICE, SYSTEM_ADMIN);
+        assertThat(sharingService.setSharingSettings(ALICE, byEmailAddress).getSharingSettings())
+                .containsExactly(share("alice", MANAGE), share("carol", COMMENT));
+    }
+
+    @Test
+    void anEmailAddressThatSeveralUsersHaveShouldBeRefused() {
+        context.bean(UserRecordRepository.class).save(UserRecordDocument.of(DAVE, "Dave", "carol@example.org", ""));
+        fixture.grantApplicationRoles(ALICE, SYSTEM_ADMIN);
+        var before = sharingService.getSharingSettings(ALICE, projectId);
+
+        assertThatThrownBy(() -> sharingService.setSharingSettings(ALICE, settings(Optional.empty(),
+                                                                                   share("alice", MANAGE),
+                                                                                   share("carol@example.org",
+                                                                                         COMMENT))))
+                .isInstanceOf(WpException.class)
+                .hasMessage("More than one user has the e-mail address carol@example.org")
+                .extracting("code", "status").containsExactly(SharingService.USER_NOT_FOUND, 400);
+        assertThat(sharingService.getSharingSettings(ALICE, projectId)).isEqualTo(before);
     }
 
     @Test

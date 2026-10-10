@@ -41,6 +41,16 @@ public class UserRecordRepository {
     }
 
     /**
+     * At most {@code limit} users whose e-mail address is {@code emailAddress}. E-mail addresses are not unique (as in
+     * the legacy collection), so a caller that needs one user asks for two and checks that there is only one.
+     */
+    @Nonnull
+    public List<UserRecordDocument> findByEmailAddress(@Nonnull String emailAddress, int limit) {
+        var query = Query.query(where(UserRecordDocument.EMAIL_ADDRESS).is(checkNotNull(emailAddress))).limit(limit);
+        return mongo.find(query, UserRecordDocument.class);
+    }
+
+    /**
      * The users whose name contains {@code match}, ignoring case.
      * <p>
      * The legacy repository passed {@code match} to Mongo as a regular expression; here it is matched literally, so

@@ -45,9 +45,10 @@ public class ProjectSharingController {
 
     @Operation(summary = "Replaces the project's sharing settings (permission EditSharingSettings)",
                description = "Every role assignment on the project is replaced: users that are not listed lose their "
-                       + "access. A user is named by user name or e-mail address and must have signed in at least "
-                       + "once, unless the user already has access. linkSharing gives every signed-in user a "
-                       + "permission; NONE gives none.")
+                       + "access, except the owner, who always keeps MANAGE (giving the owner less is a 400 "
+                       + "OWNER_ACCESS_REQUIRED). A user is named by user name and must have signed in at least "
+                       + "once, unless the user already has access; callers with ViewAnyUserDetails may name a user "
+                       + "by e-mail address. linkSharing gives every signed-in user a permission; NONE gives none.")
     @PutMapping
     public SharingDto setSharing(@Caller UserId caller,
                                  @PathVariable String projectId,
@@ -89,7 +90,8 @@ public class ProjectSharingController {
     }
 
     /**
-     * A user and the permission it is given; {@code userId} may also be an e-mail address when writing.
+     * A user and the permission it is given; when an administrator writes, {@code userId} may also be an e-mail
+     * address.
      */
     public record SharingSettingDto(String userId, SharingPermission permission) {
     }
