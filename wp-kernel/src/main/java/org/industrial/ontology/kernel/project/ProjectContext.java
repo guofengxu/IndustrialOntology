@@ -15,6 +15,7 @@ import org.industrial.ontology.kernel.match.MatchingEngine;
 import org.industrial.ontology.kernel.render.RenderingManager;
 import org.industrial.ontology.kernel.revision.RevisionManager;
 import org.industrial.ontology.kernel.revision.RevisionStore;
+import org.industrial.ontology.kernel.shortform.ActiveLanguagesManager;
 import org.industrial.ontology.kernel.shortform.DictionaryManager;
 import org.industrial.ontology.kernel.shortform.LanguageManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -60,6 +61,8 @@ public final class ProjectContext implements AutoCloseable {
 
     private final LanguageManager languageManager;
 
+    private final ActiveLanguagesManager activeLanguages;
+
     private final DictionaryManager dictionary;
 
     private final LuceneIndexWriter searchIndex;
@@ -98,6 +101,7 @@ public final class ProjectContext implements AutoCloseable {
                    @Nonnull RevisionManager revisionManager,
                    @Nonnull HierarchyProviders hierarchies,
                    @Nonnull LanguageManager languageManager,
+                   @Nonnull ActiveLanguagesManager activeLanguages,
                    @Nonnull DictionaryManager dictionary,
                    @Nonnull LuceneIndexWriter searchIndex,
                    @Nonnull DeprecatedEntityChecker deprecatedEntityChecker,
@@ -120,6 +124,7 @@ public final class ProjectContext implements AutoCloseable {
         this.revisionManager = checkNotNull(revisionManager);
         this.hierarchies = checkNotNull(hierarchies);
         this.languageManager = checkNotNull(languageManager);
+        this.activeLanguages = checkNotNull(activeLanguages);
         this.dictionary = checkNotNull(dictionary);
         this.searchIndex = checkNotNull(searchIndex);
         this.deprecatedEntityChecker = checkNotNull(deprecatedEntityChecker);
@@ -177,6 +182,14 @@ public final class ProjectContext implements AutoCloseable {
     @Nonnull
     public LanguageManager languageManager() {
         return languageManager;
+    }
+
+    /**
+     * The languages that the project's annotations use, with how often each is used.
+     */
+    @Nonnull
+    public ActiveLanguagesManager activeLanguages() {
+        return activeLanguages;
     }
 
     /**

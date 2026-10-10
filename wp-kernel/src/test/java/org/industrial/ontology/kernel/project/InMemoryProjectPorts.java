@@ -8,6 +8,7 @@ import org.industrial.ontology.domain.project.PrefixDeclarations;
 import org.industrial.ontology.domain.project.ProjectDetails;
 import org.industrial.ontology.domain.search.EntitySearchFilter;
 import org.industrial.ontology.domain.watches.Watch;
+import org.industrial.ontology.kernel.api.match.MatchingEngine;
 import org.industrial.ontology.kernel.api.port.ChangePermissionChecker;
 import org.industrial.ontology.kernel.api.port.EntityDiscussionThreadRepository;
 import org.industrial.ontology.kernel.api.port.PrefixDeclarationsStore;
@@ -93,7 +94,7 @@ public class InMemoryProjectPorts implements ProjectPorts {
 
     @Nonnull
     @Override
-    public TagsManager tagsManager(@Nonnull ProjectId projectId) {
+    public TagsManager tagsManager(@Nonnull ProjectId projectId, @Nonnull MatchingEngine matchingEngine) {
         return entity -> Set.of();
     }
 

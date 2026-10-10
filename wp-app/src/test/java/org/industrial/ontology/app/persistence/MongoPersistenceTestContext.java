@@ -2,6 +2,10 @@ package org.industrial.ontology.app.persistence;
 
 import com.mongodb.client.MongoDatabase;
 import org.industrial.ontology.app.access.AccessAutoConfiguration;
+import org.industrial.ontology.app.project.ProjectPortsAutoConfiguration;
+import org.industrial.ontology.app.project.ProjectRuntimeAutoConfiguration;
+import org.industrial.ontology.app.project.ProjectServicesAutoConfiguration;
+import org.industrial.ontology.kernel.project.DataDirectoryLayout;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
@@ -10,6 +14,7 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,8 +44,28 @@ public final class MongoPersistenceTestContext implements AutoCloseable {
         return start(List.of(AccessAutoConfiguration.class), properties);
     }
 
-    private static MongoPersistenceTestContext start(List<Class<?>> moreAutoConfigurations, String... properties) {
+    /**
+     * What wp-server has of wp-app (S6): the persistence, the access services, {@code MongoProjectPorts}, the project
+     * runtime over the data directory, and the project services.
+     */
+    public static MongoPersistenceTestContext startWithProjects(Path dataDirectory, String... properties) {
         var context = new AnnotationConfigApplicationContext();
+        context.registerBean(DataDirectoryLayout.class, () -> new DataDirectoryLayout(dataDirectory));
+        return start(context,
+                     List.of(AccessAutoConfiguration.class,
+                             ProjectPortsAutoConfiguration.class,
+                             ProjectRuntimeAutoConfiguration.class,
+                             ProjectServicesAutoConfiguration.class),
+                     properties);
+    }
+
+    private static MongoPersistenceTestContext start(List<Class<?>> moreAutoConfigurations, String... properties) {
+        return start(new AnnotationConfigApplicationContext(), moreAutoConfigurations, properties);
+    }
+
+    private static MongoPersistenceTestContext start(AnnotationConfigApplicationContext context,
+                                                     List<Class<?>> moreAutoConfigurations,
+                                                     String... properties) {
         TestPropertyValues.of("spring.data.mongodb.uri=" + MongoTestServer.uri(MongoTestServer.uniqueDatabase()))
                           .and(properties)
                           .applyTo(context);

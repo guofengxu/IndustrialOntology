@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.industrial.ontology.api.security.Caller;
+import org.industrial.ontology.app.access.PermissionService;
 import org.industrial.ontology.app.admin.ApplicationSettingsService;
 import org.industrial.ontology.app.error.WpException;
 import org.industrial.ontology.app.user.UserService;
@@ -15,7 +16,9 @@ import org.industrial.ontology.domain.app.ProjectCreationSetting;
 import org.industrial.ontology.domain.app.ProjectUploadSetting;
 import org.industrial.ontology.domain.core.EmailAddress;
 import org.industrial.ontology.domain.core.UserId;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Application administration (docs/02 §2). The services check the permissions: {@code EditApplicationSettings} for
- * the settings, {@code ViewAnyUserDetails} for the user list; both come with {@code SystemAdmin}.
+ * the settings, {@code ViewAnyUserDetails} for the user list, {@code RebuildPermissions} for rebuilding the stored
+ * permissions; all come with {@code SystemAdmin}.
  */
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -40,9 +44,14 @@ public class AdminController {
 
     private final UserService userService;
 
-    public AdminController(ApplicationSettingsService applicationSettingsService, UserService userService) {
+    private final PermissionService permissionService;
+
+    public AdminController(ApplicationSettingsService applicationSettingsService,
+                           UserService userService,
+                           PermissionService permissionService) {
         this.applicationSettingsService = checkNotNull(applicationSettingsService);
         this.userService = checkNotNull(userService);
+        this.permissionService = checkNotNull(permissionService);
     }
 
     @Operation(summary = "The application settings (permission EditApplicationSettings)")
@@ -68,6 +77,14 @@ public class AdminController {
                           .map(user -> new UserDto(user.userId().getUserName(), user.displayName(),
                                                    user.emailAddress()))
                           .toList();
+    }
+
+    @Operation(summary = "Recomputes the stored permissions of every role assignment (permission RebuildPermissions)",
+               description = "For when the built-in roles have changed; wp-cli rebuild-permissions does the same.")
+    @PostMapping("/permissions/rebuild")
+    public ResponseEntity<Void> rebuildPermissions(@Caller UserId caller) {
+        permissionService.rebuildPermissions(caller);
+        return ResponseEntity.noContent().build();
     }
 
     /**

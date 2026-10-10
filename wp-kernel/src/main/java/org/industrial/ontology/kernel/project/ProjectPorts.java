@@ -1,6 +1,7 @@
 package org.industrial.ontology.kernel.project;
 
 import org.industrial.ontology.domain.core.ProjectId;
+import org.industrial.ontology.kernel.api.match.MatchingEngine;
 import org.industrial.ontology.kernel.api.port.ChangePermissionChecker;
 import org.industrial.ontology.kernel.api.port.EntityDiscussionThreadRepository;
 import org.industrial.ontology.kernel.api.port.PrefixDeclarationsStore;
@@ -32,8 +33,14 @@ public interface ProjectPorts {
     @Nonnull
     EntityDiscussionThreadRepository entityDiscussionThreadRepository();
 
+    /**
+     * The tags of the project's entities: those assigned to an entity and those whose criteria the entity matches,
+     * as the legacy {@code TagsManager} with its {@code CriteriaBasedTagsManager}.
+     *
+     * @param matchingEngine the project's own matching engine, which evaluates the tag criteria
+     */
     @Nonnull
-    TagsManager tagsManager(@Nonnull ProjectId projectId);
+    TagsManager tagsManager(@Nonnull ProjectId projectId, @Nonnull MatchingEngine matchingEngine);
 
     @Nonnull
     WatchManager watchManager(@Nonnull ProjectId projectId);

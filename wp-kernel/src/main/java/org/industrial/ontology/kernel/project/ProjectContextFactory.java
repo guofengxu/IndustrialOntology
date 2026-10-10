@@ -326,6 +326,7 @@ public class ProjectContextFactory {
                                                      () -> indexesBuilder.get(
                                                              PropertyAssertionAxiomsBySubjectIndex.class),
                                                      () -> axiomPropertyValueTranslator));
+        var matchingEngine = new MatchingEngine(projectSignature, matcherFactory);
 
         // Languages
         var projectDetailsRepository = ports.projectDetailsRepository();
@@ -429,7 +430,7 @@ public class ProjectContextFactory {
                                            projectOntologies,
                                            entitiesInProjectSignatureByIri));
         var containsEntityInSignature = new HasContainsEntityInSignatureImpl(entitiesInProjectSignature);
-        var tagsManager = ports.tagsManager(projectId);
+        var tagsManager = ports.tagsManager(projectId, matchingEngine);
         var entityNodeRenderer = new EntityNodeRenderer(projectId,
                                                         dictionaryManager,
                                                         deprecatedEntityChecker,
@@ -520,12 +521,13 @@ public class ProjectContextFactory {
                                   revisionManager,
                                   hierarchies,
                                   languageManager,
+                                  activeLanguagesManager,
                                   dictionaryManager,
                                   luceneIndexWriter,
                                   deprecatedEntityChecker,
                                   renderingManager,
                                   entityNodeRenderer,
-                                  new MatchingEngine(projectSignature, matcherFactory),
+                                  matchingEngine,
                                   matcherFactory,
                                   defaultOntologyIdManager,
                                   crudKitHandlerCache,

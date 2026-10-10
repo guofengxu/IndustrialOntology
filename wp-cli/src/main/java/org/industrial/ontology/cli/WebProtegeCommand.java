@@ -15,7 +15,8 @@ import picocli.CommandLine.Spec;
 @Command(name = "wp-cli",
          mixinStandardHelpOptions = true,
          description = "Administration commands for the IndustrialOntology database and data directory.",
-         subcommands = {MigrateMongoCommand.class, CreateAdminCommand.class, GenerateApiKeyCommand.class})
+         subcommands = {MigrateMongoCommand.class, CreateAdminCommand.class, GenerateApiKeyCommand.class,
+                        RebuildPermissionsCommand.class, SetPermissionsCommand.class})
 public class WebProtegeCommand implements Runnable {
 
     @Spec

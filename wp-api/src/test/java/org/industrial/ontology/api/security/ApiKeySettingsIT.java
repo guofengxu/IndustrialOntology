@@ -23,8 +23,10 @@ class ApiKeySettingsIT extends ApiIntegrationTest {
     @Test
     void downloadsShouldNotTakeTheKeyFromTheQuery() {
         var key = apiKeyService.generateApiKeyForUser(UserId.getUserId("viewer"), "no query keys").apiKey();
+        var download = "/download?project=" + createProject("viewer", "No query keys").getId();
 
-        assertThat(get("/download?apiKey=" + key.getKey(), null).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(json(get("/download", apiKey(key))).get("caller").asText()).isEqualTo("viewer");
+        assertThat(get(download + "&apiKey=" + key.getKey(), null).getStatusCode())
+                .isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(get(download, apiKey(key)).getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }

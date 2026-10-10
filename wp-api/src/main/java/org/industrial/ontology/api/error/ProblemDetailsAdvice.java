@@ -3,6 +3,7 @@ package org.industrial.ontology.api.error;
 import jakarta.servlet.http.HttpServletRequest;
 import org.industrial.ontology.app.access.PermissionDeniedException;
 import org.industrial.ontology.app.error.WpException;
+import org.industrial.ontology.app.project.UploadService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,6 +17,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -25,7 +27,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  *     <li>{@link WpException}: its status and code, for example 403 {@code PERMISSION_DENIED};</li>
  *     <li>the legacy kernel's {@code PermissionDeniedException}: 403 {@code PERMISSION_DENIED} as well;</li>
  *     <li>Spring MVC's own exceptions (unreadable body, missing parameter, unsupported method...): their status, with
- *     the status name as the code.</li>
+ *     the status name as the code; a multipart upload over the size limit is 413 {@code UPLOAD_TOO_LARGE}.</li>
  * </ul>
  */
 @RestControllerAdvice
@@ -87,6 +89,20 @@ public class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
     public ResponseEntity<ProblemDetail> handle(AuthenticationException exception, HttpServletRequest request) {
         return response(Problems.problem(HttpStatus.UNAUTHORIZED, Problems.UNAUTHENTICATED, "Authentication failed",
                                          request));
+    }
+
+    /**
+     * An upload larger than {@code spring.servlet.multipart.max-file-size}: the code that {@code UploadService} gives
+     * uploads larger than the application's maximum upload size.
+     */
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException exception,
+                                                                          HttpHeaders headers,
+                                                                          HttpStatusCode status,
+                                                                          WebRequest request) {
+        var problem = exception.getBody();
+        problem.setProperty(Problems.CODE, UploadService.UPLOAD_TOO_LARGE);
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
     @Override

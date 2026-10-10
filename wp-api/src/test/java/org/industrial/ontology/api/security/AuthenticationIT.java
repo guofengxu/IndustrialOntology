@@ -167,15 +167,22 @@ class AuthenticationIT extends ApiIntegrationTest {
         assertThat(json(response).get("code").asText()).isEqualTo("INVALID_REQUEST");
     }
 
+    /**
+     * {@code /download} is the real download (S6): only the editor may download the editor's project, so 200 and 403
+     * tell whose key authenticated the request.
+     */
     @Test
     void theCompatibilityPathsShouldUseTheSameChain() {
         var key = apiKeyService.generateApiKeyForUser(UserId.getUserId("viewer"), "legacy script").apiKey();
+        var editorsKey = apiKeyService.generateApiKeyForUser(UserId.getUserId("editor"), "download link").apiKey();
+        var download = "/download?project=" + createProject("editor", "Compatibility chain").getId();
 
         assertThat(json(get("/data/projects", apiKey(key))).get("caller").asText()).isEqualTo("viewer");
         assertThat(json(get("/data/projects", bearer("editor"))).get("caller").asText()).isEqualTo("editor");
         assertUnauthenticated(get("/data/projects", null));
-        assertThat(json(get("/download?apiKey=" + key.getKey(), null)).get("caller").asText()).isEqualTo("viewer");
-        assertUnauthenticated(get("/download", null));
+        assertThat(get(download + "&apiKey=" + editorsKey.getKey(), null).getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(get(download + "&apiKey=" + key.getKey(), null).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertUnauthenticated(get(download, null));
     }
 
     @Test
@@ -220,10 +227,12 @@ class AuthenticationIT extends ApiIntegrationTest {
     @Test
     void aTokenShouldWinOverAnApiKey() {
         var viewersKey = apiKeyService.generateApiKeyForUser(UserId.getUserId("viewer"), "precedence").apiKey();
+        var download = "/download?project=" + createProject("editor", "Token precedence").getId();
 
-        var response = get("/download?apiKey=" + viewersKey.getKey(), bearer("editor"));
+        var response = get(download + "&apiKey=" + viewersKey.getKey(), bearer("editor"));
 
-        assertThat(json(response).get("caller").asText()).isEqualTo("editor");
+        // The viewer may not download the editor's project
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test

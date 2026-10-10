@@ -75,14 +75,18 @@ public class ProjectDownloader {
         this.prefixDeclarationsStore = checkNotNull(prefixDeclarationsStore);
     }
 
+    /**
+     * Writes the zip archive of the revision's ontologies.
+     *
+     * @throws IOException if writing fails, or an ontology cannot be stored in the format; the legacy downloader only
+     *                     printed the storage error, and the caller then kept the incomplete archive
+     */
     public void writeProject(OutputStream outputStream) throws IOException {
         try {
             exportProjectRevision(fileName, revision, outputStream, format);
-
         } catch(OWLOntologyStorageException e) {
-            e.printStackTrace();
+            throw new IOException("Could not store the ontologies of project " + projectId + " as " + format, e);
         }
-
     }
 
     private void exportProjectRevision(@Nonnull String projectDisplayName,

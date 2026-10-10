@@ -6,6 +6,7 @@ import org.industrial.ontology.app.admin.persistence.ApplicationPreferencesRepos
 import org.industrial.ontology.app.apikey.ApiKeyService;
 import org.industrial.ontology.app.apikey.persistence.UserApiKeyRepository;
 import org.industrial.ontology.app.persistence.MongoPersistenceAutoConfiguration;
+import org.industrial.ontology.app.project.persistence.MongoProjectDetailsRepository;
 import org.industrial.ontology.app.user.UserService;
 import org.industrial.ontology.app.user.persistence.UserRecordRepository;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -17,8 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Clock;
 
 /**
- * Who the caller is and what it may do (docs/01 §5.1, §6; stage S5): the {@link AccessManager} on the
- * {@code RoleAssignments} collection, and the user, API key and application settings services.
+ * Who the caller is and what it may do (docs/01 §5.1, §6; stages S5, S6): the {@link AccessManager} on the
+ * {@code RoleAssignments} collection, the user, API key and application settings services, and the sharing and
+ * permission services.
  * <p>
  * An auto-configuration, like the persistence it builds on, so that wp-cli, which scans only its own package, gets
  * the same services as the server. wp-api contributes the {@link ExternalRoles} of the request (the Keycloak admin
@@ -75,5 +77,24 @@ public class AccessAutoConfiguration {
     public ApplicationSettingsService applicationSettingsService(AccessManager accessManager,
                                                                  ApplicationPreferencesRepository preferences) {
         return new ApplicationSettingsService(accessManager, preferences);
+    }
+
+    /**
+     * Who may access a project (S6); wp-cli's {@code set-permissions} uses it too, so it does not need a loaded
+     * project.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public SharingService sharingService(AccessManager accessManager,
+                                         MongoProjectDetailsRepository projectDetailsRepository,
+                                         UserRecordRepository userRecordRepository) {
+        return new SharingService(accessManager, projectDetailsRepository, userRecordRepository);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public PermissionService permissionService(AccessManager accessManager,
+                                               MongoProjectDetailsRepository projectDetailsRepository) {
+        return new PermissionService(accessManager, projectDetailsRepository);
     }
 }

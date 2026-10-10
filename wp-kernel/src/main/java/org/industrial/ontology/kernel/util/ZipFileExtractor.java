@@ -6,6 +6,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
@@ -48,7 +49,7 @@ public class ZipFileExtractor {
         String entryName = entry.getName();
         File entryFile = new File(outputDirectory, entryName);
         if (!entryFile.getCanonicalPath().startsWith(outputDirectory.getCanonicalPath() + File.separator)) {
-            throw new IOException("Zip entry is outside of the target directory: " + entryName);
+            throw new ZipException("Zip entry is outside of the target directory: " + entryName);
         }
         if (entryName.endsWith("/")) {
             entryFile.mkdirs();
