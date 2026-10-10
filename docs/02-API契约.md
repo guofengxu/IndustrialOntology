@@ -14,7 +14,7 @@
 | 错误格式 | RFC 7807 `application/problem+json`：`{type, title, status, detail, instance, code, errors?}`；`code` 为稳定字符串，如 `PROJECT_NOT_FOUND`、`PERMISSION_DENIED`、`INVALID_IRI`、`CONFLICT_FRAME_CHANGED` |
 | 项目 ID | 路径参数 `{projectId}`，UUID 正则校验；未知 → 404 `PROJECT_NOT_FOUND` |
 | IRI 参数 | **一律放 query**（`?iri=`），URL 编码；不放 path |
-| OWL 实体 JSON | `{"@type":"Class"\|"ObjectProperty"\|"DataProperty"\|"AnnotationProperty"\|"NamedIndividual"\|"Datatype","iri":"…"}` |
+| OWL 实体 JSON | `{"type":"owl:Class"\|"owl:ObjectProperty"\|"owl:DatatypeProperty"\|"owl:AnnotationProperty"\|"owl:NamedIndividual"\|"rdfs:Datatype","iri":"…"}`，即旧 `ObjectMapperProvider` 的格式（07 4-6；S6 起 REST 的 `ObjectMapper` 注册了同一套序列化器，`JsonConfigurationTest` 固定）。本稿原写 `{"@type":"Class",…}` |
 | 字面量 JSON | `{"value":"23.5","lang":"", "datatype":"http://www.w3.org/2001/XMLSchema#decimal"}` |
 | 分页 | `?page=1&size=50`（1 基，与旧 `PageRequest` 一致）；响应 `{pageNumber, pageCount, pageSize, totalElements, pageElements:[…]}` |
 | 写操作提交说明 | 可选 `commitMessage` 字段；缺省由服务端生成（沿用旧 change description） |
@@ -34,7 +34,7 @@
 | GET | `/api/v1/admin/users?q=` | USER_ADMIN | 用户列表（新功能） |
 | POST | `/api/v1/admin/permissions/rebuild` | REBUILD_PERMISSIONS | |
 
-已实现（S5，除 `permissions/rebuild` 随 `rebuild-permissions` 在 S6 实现外），与上表的差别和补充：
+已实现（S5；`permissions/rebuild` 随 `rebuild-permissions` 在 S6 实现，成功返回 204，要求 `RebuildPermissions`，`SYSTEM_ADMIN` 带有），与上表的差别和补充：
 - `applicationActions` 是动作 id（`EditApplicationSettings`、`CreateEmptyProject` 等，即 `BuiltInAction` 的 `ActionId`，与 `RoleAssignments.actionClosure` 中的字符串相同），按 id 排序；`email` 未知时为 `null`；`displayName` 是姓名，没有姓名时用用户名。Keycloak 管理员（realm 角色 `webprotege-admin`）的 `applicationActions` 包含 `SystemAdmin` 的全部动作，但不写入 `RoleAssignments`。
 - `POST /api/v1/me/api-keys` 的请求体为 `{purpose}`，`purpose` 为空时返回 400 `INVALID_REQUEST`。成功时返回 201、`Location` 和 `Cache-Control: no-store`，响应体为 `{apiKeyId, apiKey, purpose, createdAt}`；`createdAt` 是 ISO-8601 格式。`DELETE` 一个不属于自己或不存在的 Key 返回 404 `API_KEY_NOT_FOUND`。`POST` 和 `DELETE` 只接受 bearer 令牌，用 API Key 调用返回 403；`GET` 列表两种凭证都可以。
 - `/admin/settings` 的读和写都要求 `EDIT_APPLICATION_SETTINGS`（同旧 handler）。字段为 `{applicationName, systemNotificationEmailAddress, applicationLocation:{scheme,host,path,port}, accountCreationSetting, projectCreationSetting, projectUploadSetting, notificationEmailsSetting, maxUploadSize}`，旧 DTO 中始终为空的三个用户列表已去掉；任一字段缺失返回 400。`PUT` 返回保存后的设置。
@@ -64,6 +64,21 @@
 | GET | `/api/v1/projects/{projectId}/export/settings` / POST `/import/settings` | EDIT_PROJECT_SETTINGS | `AllProjectSettings` JSON（兼容旧导出文件） |
 | GET | `/download?project=&revision=&format=` | DOWNLOAD_PROJECT | 兼容路径，`format ∈ owl\|ttl\|owx\|omn\|ofn`，zip 流 |
 | GET | `/api/v1/projects/{projectId}/download?revision=&format=` | DOWNLOAD_PROJECT | 同上新路径 |
+
+已实现（S6，除 `search-settings` 随搜索设置在 S7、`export/settings` 与 `import/settings` 在 S9 实现外；`AllProjectSettings` 包含表单、标签和搜索过滤器，要等这些服务），与上表的差别和补充：
+- 路径里的项目 id 不是 UUID 时返回 400 `INVALID_REQUEST`，是 UUID 但项目不存在时返回 404 `PROJECT_NOT_FOUND`，对所有调用者都一样（先查项目是否存在，再查权限）。
+- `GET /api/v1/projects`：`filter` 可省略，省略时列出全部可用项目（含回收站中的）；`owned` 是自己的、不在回收站，`shared` 是别人的、不在回收站，`trash` 是自己的、在回收站，与旧客户端的三个视图相同；其他值返回 400。每项为 `{projectId, displayName, description, owner, inTrash, createdAt, createdBy, modifiedAt, modifiedBy, downloadable, trashable, lastOpenedAt}`（旧 `AvailableProject`，`lastOpenedAt` 没打开过时为 `null`），按显示名排序。与旧版一样，只经链接共享可见的项目不在列表中，自己的项目即使没有角色也在列表中。
+- 项目详情 `ProjectDto` 为 `{projectId, displayName, description, owner, inTrash, defaultLanguage, defaultDisplayNameSettings, createdAt, createdBy, modifiedAt, modifiedBy}`，语言字段是领域 JSON（如 `{"type":"AnnotationAssertion","propertyIri":"…","lang":"en"}`）。
+- `POST /api/v1/projects` 的请求体为 `{displayName, description, language, sourceDocumentId}`（`language` 即上表的 `language`，用作默认显示名的语言标签），成功返回 201、`Location` 和 `ProjectDto`。显示名为空返回 400 `INVALID_REQUEST`；上传文档不存在或已被使用返回 400 `UPLOAD_NOT_FOUND`，无法解析返回 400 `INVALID_UPLOAD`。创建者得到 `CanManage` 和 `ProjectDownloader`，任意登录用户得到 `LayoutEditor`（同旧版）。
+- `GET /api/v1/projects/{projectId}` 只读详情，不加载项目。新增 `POST /api/v1/projects/{projectId}/open`（要求 `ViewProject`），即旧 `LoadProject`：加载项目、记录访问（`ProjectAccess`）、加入调用者的最近项目，返回 `ProjectDto`；前端打开项目时调用它。
+- 回收站 `POST`/`DELETE …/trash` 返回 `ProjectDto`；所有者，或在应用（或项目）上有 `MoveAnyProjectToTrash` 的用户才能操作。旧版移入回收站不检查权限，移出只许所有者。
+- `GET …/permissions`：按 id 排序的动作 id 列表（如 `ViewProject`），任何登录用户都能查自己的。
+- `…/settings`：`{displayName, description, defaultLanguage, defaultDisplayNameSettings, webhooks:[{payloadUrl, eventTypes[]}]}`。读写都要求 `EditProjectSettings`（同旧 handler；设置里有 webhook 地址，所以读也不放宽到 `ViewProject`）。`PUT` 同时替换 webhook，各字段缺失返回 400；webhook 必须是 http(s) URL。`…/webhooks` 读写同一组 webhook（`[{payloadUrl, eventTypes[]}]`）。
+- `…/languages`：`GET`（`ViewProject`）返回 `{defaultLanguage, displayNameSettings, languageUsage:[{language, referenceCount}]}`（后者对应旧 `GetProjectInfo` 的语言使用情况，用得最多的在前）；`PUT`（`EditProjectSettings`）请求体为 `{defaultLanguage, displayNameSettings}`。`…/lang-tags`（`ViewProject`）返回项目注解中用到的语言标签，如 `["en","zh"]`。
+- `…/crud-settings`：`GET`（`ViewProject`）返回旧 `EntityCrudKitSettings` JSON（`{prefixSettings:{iriPrefix, conditionalIriPrefixes}, suffixSettings:{_class, …}}`，项目还没有设置时返回并保存默认值）；`PUT`（`EditNewEntitySettings`）请求体相同，`?prefixUpdateStrategy=FIND_AND_REPLACE` 时还把 IRI 以旧前缀开头的实体改到新前缀下（另需 `EditOntology`，产生一条修订），默认 `LEAVE_INTACT`。`GET /api/v1/crud-kits` 返回 `[{kitId, displayName, defaultPrefixSettings, defaultSuffixSettings}]`，kit 为 `UUID`、`OBO`、`SuppliedNameSuffix`。
+- `…/sharing`：读写都要求 `EditSharingSettings`（同旧 handler，读也不放宽）。`linkSharing` 取 `NONE`、`VIEW`、`COMMENT`、`EDIT`、`MANAGE`（旧客户端四种都提供，所以保留 `MANAGE`），`sharingSettings` 按用户名排序。`PUT` 替换项目上的全部角色分配：不在列表中的用户失去访问，非共享角色（如 `ProjectDownloader`）也被替换，同旧版。`userId` 也可以是邮箱；既不是已知用户名也不是已知邮箱、且在项目上还没有角色的，返回 400 `USER_NOT_FOUND`，什么都不改（旧版悄悄跳过）。Keycloak 中的用户要先登录一次，或由管理员用 `wp-cli set-permissions` 设置。
+- `POST /api/v1/uploads`：multipart 字段 `file`，返回 201 `{documentId, fileName, size}`。大小上限是应用设置的 `maxUploadSize`，zip 按解压后的内容计算（边解压边计数，不信任压缩包头）；超出返回 413 `UPLOAD_TOO_LARGE`，超过 `spring.servlet.multipart.max-file-size` 时同样返回 413 `UPLOAD_TOO_LARGE`；以 zip 开头却读不了的文件返回 400 `INVALID_UPLOAD`。文档用于创建项目后即被删除。用上传文档建项目时，zip 中没有 `root-ontology.owl`（`detail` 给出这句提示）或含有解压目录之外的条目，也返回 400 `INVALID_UPLOAD`。可接受的格式是 OWL API 自己能读的：RDF/XML、OWL/XML、函数式、Manchester、Turtle（含 N-Triples）、OBO、KRSS2，以及 BinaryOWL；N-Quads、TriG、JSON-LD、RDF/JSON、TriX、RDFa 不接受（旧版经 Rio 解析器接受，其中 JSON-LD 解析器会读取文档指定的远程或本机上下文）。`owl:imports` 只解析到同一次上传（zip）中的其他文档；上传中没有的导入不会被获取，项目里只保留导入声明。旧版会按 IRI 从网络或本机文件读取被导入的本体并入项目，上传者可以借此读取服务器上的文件或访问内网地址。需要被导入的本体时，把它们一起打进 zip。
+- 下载：两条路径都返回 `application/zip`，`Content-Disposition` 的文件名沿用旧规则（显示名的空白换成 `-`，非 head 修订加 `-revision-<n>`，如 `pizza-ontologies.owl.zip`）。`/download` 保留旧参数的宽松解析（修订号缺失或不合法当作 head，未知格式当作 RDF/XML，见旧 `FileDownloadParameters`），项目参数缺失或不是 UUID 返回 400；`/api/v1/…/download` 对不合法的 `revision`（数字或 `HEAD`）和 `format` 返回 400。超过 head 或小于 0 的修订返回 404 `REVISION_NOT_FOUND`。下载在下载缓存中生成一次，之后直接返回。
 
 ---
 
