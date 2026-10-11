@@ -27,10 +27,13 @@ jobs:
         run: ./mvnw -B -ntp spotless:check
       - name: Checkstyle
         run: ./mvnw -B -ntp checkstyle:check
+      # Persistence tests run against a mongo:7 container (MongoTestServer) and the security tests against Keycloak
+      # with the deploy realm (OidcTestServer); "container" fails instead of falling back to the in-memory server or
+      # the local token issuer when Docker is missing.
       - name: Test
-        run: ./mvnw -B -ntp test
+        run: ./mvnw -B -ntp test -Dwp.test.mongo=container -Dwp.test.oidc=container
       - name: Build
-        run: ./mvnw -B -ntp verify
+        run: ./mvnw -B -ntp verify -Dwp.test.mongo=container -Dwp.test.oidc=container
 
   # Compares the ported kernel with the legacy webprotege-server-core (docs/05 P0-03, P0-05, P0-06 and the P0
   # performance baseline). The legacy jars are not on Maven Central, so they are built from the pinned commit.

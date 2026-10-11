@@ -43,6 +43,10 @@
         <springdoc-openapi.version>2.8.8</springdoc-openapi.version>
         <testcontainers.version>1.21.3</testcontainers.version>
         <testcontainers-keycloak.version>3.9.1</testcontainers-keycloak.version>
+        <!-- In-memory Mongo wire-protocol server for persistence tests where Docker is unavailable (MongoTestServer). -->
+        <mongo-java-server.version>1.47.0</mongo-java-server.version>
+        <!-- wp-cli commands (docs/01 §8). -->
+        <picocli.version>4.7.7</picocli.version>
         <!-- Imported only by wp-governance and wp-ai; never add it to dependencyManagement here. -->
         <spring-ai-alibaba.version>1.1.2.3</spring-ai-alibaba.version>
 
@@ -237,11 +241,22 @@
                 <version>${guava.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli-spring-boot-starter</artifactId>
+                <version>${picocli.version}</version>
+            </dependency>
+
             <!-- Test -->
             <dependency>
                 <groupId>com.github.dasniko</groupId>
                 <artifactId>testcontainers-keycloak</artifactId>
                 <version>${testcontainers-keycloak.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.bwaldvogel</groupId>
+                <artifactId>mongo-java-server</artifactId>
+                <version>${mongo-java-server.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

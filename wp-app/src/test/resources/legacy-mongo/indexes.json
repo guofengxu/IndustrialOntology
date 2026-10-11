@@ -1,0 +1,16 @@
+{"collection": "ProjectAccess", "key": {"projectId": {"$numberInt": "1"}, "userId": {"$numberInt": "1"}}, "unique": false}
+{"collection": "ProjectDetails", "key": {"_id": {"$numberInt": "1"}, "displayName": {"$numberInt": "1"}}, "unique": false}
+{"collection": "PerspectiveDescriptors", "key": {"projectId": {"$numberInt": "1"}, "userId": {"$numberInt": "1"}, "perspectives": {"$numberInt": "1"}}, "unique": true}
+{"collection": "PerspectiveLayouts", "key": {"projectId": {"$numberInt": "1"}, "userId": {"$numberInt": "1"}, "perspectiveId": {"$numberInt": "1"}}, "unique": true}
+{"collection": "Forms", "key": {"projectId": {"$numberInt": "1"}, "formDescriptor.formId": {"$numberInt": "1"}}, "unique": true}
+{"collection": "Tags", "key": {"projectId": {"$numberInt": "1"}, "label": {"$numberInt": "1"}}, "unique": true}
+{"collection": "EntitySearchFilters", "key": {"projectId": {"$numberInt": "1"}}, "unique": false}
+{"collection": "Watches", "key": {"projectId": {"$numberInt": "1"}, "userId": {"$numberInt": "1"}, "entity": {"$numberInt": "1"}}, "unique": true}
+{"collection": "EntityTags", "key": {"projectId": {"$numberInt": "1"}, "entity": {"$numberInt": "1"}}, "unique": true}
+{"collection": "EntityTags", "key": {"tags": {"$numberInt": "1"}}, "unique": false}
+{"collection": "UserApiKeys", "key": {"apiKeys.apiKeyId": {"$numberInt": "1"}}, "unique": true}
+{"collection": "UserApiKeys", "key": {"apiKeys.apiKey": {"$numberInt": "1"}}, "unique": true}
+{"collection": "EntityDiscussionThreads", "key": {"projectId": {"$numberInt": "1"}, "entity": {"$numberInt": "1"}, "status": {"$numberInt": "1"}}, "unique": false}
+{"collection": "EntityDiscussionThreads", "key": {"comments._id": {"$numberInt": "1"}}, "unique": true}
+{"collection": "RoleAssignments", "key": {"userName": {"$numberInt": "1"}, "projectId": {"$numberInt": "1"}}, "unique": true}
+{"collection": "ProjectWebhook", "key": {"projectId": {"$numberInt": "1"}, "subscribedToEvents": {"$numberInt": "1"}}, "unique": true}

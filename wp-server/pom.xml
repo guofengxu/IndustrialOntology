@@ -60,6 +60,24 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- The smoke test runs against MongoTestServer (wp-app test jar): health must report Mongo UP (docs/01 §7). -->
+        <dependency>
+            <groupId>org.industrial.ontology</groupId>
+            <artifactId>wp-app</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.bwaldvogel</groupId>
+            <artifactId>mongo-java-server</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

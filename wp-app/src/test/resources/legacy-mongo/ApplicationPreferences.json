@@ -1,0 +1,1 @@
+{"_id": "Preferences", "applicationName": "IndustrialOntology", "systemNotificationEmailAddress": "admin@example.org", "applicationLocation": {"scheme": "https", "host": "ontology.example.org", "path": "/webprotege", "port": {"$numberInt": "443"}}, "maxUploadSize": {"$numberLong": "9223372036854775807"}}

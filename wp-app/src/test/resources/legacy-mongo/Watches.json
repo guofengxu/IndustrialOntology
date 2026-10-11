@@ -1,0 +1,2 @@
+{"_id": {"$oid": "5f0c0c0c0c0c0c0c0c00000d"}, "projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "userId": "alice", "entity": {"type": "Class", "iri": "http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza"}, "type": "BRANCH"}
+{"_id": {"$oid": "5f0c0c0c0c0c0c0c0c00000e"}, "projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "userId": "bob", "entity": {"type": "ObjectProperty", "iri": "http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping"}, "type": "ENTITY"}

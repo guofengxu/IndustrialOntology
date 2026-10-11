@@ -1,0 +1,1 @@
+{"_id": {"$oid": "5f0c0c0c0c0c0c0c0c00000f"}, "projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "payloadUrl": "https://hooks.example.org/pizza", "subscribedToEvents": ["PROJECT_CHANGED"]}

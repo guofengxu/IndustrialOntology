@@ -14,7 +14,6 @@ import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
@@ -43,15 +42,24 @@ public class ZipArchiveProjectSourcesExtractor implements RawProjectSourcesExtra
     }
 
 
+    /**
+     * Unlike the legacy version, the extracted files are deleted when the archive cannot be used, and a missing root
+     * ontology document is reported as a {@link RootOntologyDocumentNotFoundException}.
+     */
     private RawProjectSources extractZipFile(File zipFile) throws IOException {
         File tempDirectory = tempFileFactory.createTempDirectory();
-        ZipFileExtractor extractor = new ZipFileExtractor();
-        extractor.extractFileToDirectory(zipFile, tempDirectory);
-        Optional<File> rootOntologyDocument = getRootOntologyDocumentFile(tempDirectory);
-        if(!rootOntologyDocument.isPresent()) {
-            throw new FileNotFoundException(rootOntologyDocumentFileMatcher.getErrorMessage());
+        try {
+            ZipFileExtractor extractor = new ZipFileExtractor();
+            extractor.extractFileToDirectory(zipFile, tempDirectory);
+            Optional<File> rootOntologyDocument = getRootOntologyDocumentFile(tempDirectory);
+            if(!rootOntologyDocument.isPresent()) {
+                throw new RootOntologyDocumentNotFoundException(rootOntologyDocumentFileMatcher.getErrorMessage());
+            }
+            return new ExtractedZipArchiveProjectSources(rootOntologyDocument.get(), tempDirectory);
+        } catch (IOException | RuntimeException e) {
+            FileUtils.deleteQuietly(tempDirectory);
+            throw e;
         }
-        return new ExtractedZipArchiveProjectSources(rootOntologyDocument.get(), tempDirectory);
     }
 
     @SuppressWarnings("unchecked")

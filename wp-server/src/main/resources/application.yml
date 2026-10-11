@@ -2,24 +2,38 @@
 #   data.directory       -> webprotege.data-directory
 #   project.dormant.time -> webprotege.project.dormant-time
 #   application.version  -> info.app.version (from build-info)
+server:
+  shutdown: graceful                                     # requests finish, then ProjectRegistry.closeAll() (docs/01 §7)
 spring:
   application.name: IndustrialOntology
   data.mongodb.uri: ${WP_MONGODB_URI:mongodb://localhost:27017/webprotege}
-  security.oauth2.resourceserver.jwt.issuer-uri: ${WP_OIDC_ISSUER:http://localhost:8180/realms/webprotege}
-  servlet.multipart.max-file-size: ${WP_MAX_UPLOAD:200MB}
+  security.oauth2.resourceserver.jwt:
+    issuer-uri: ${WP_OIDC_ISSUER:http://localhost:8180/realms/webprotege}
+    audiences: ${WP_OIDC_AUDIENCE:webprotege-api}        # tokens must name the API (realm audience mapper)
+  servlet.multipart:                                     # POST /api/v1/uploads; the request limit defaults to 10MB
+    max-file-size: ${WP_MAX_UPLOAD:200MB}
+    max-request-size: ${WP_MAX_UPLOAD:200MB}
   mail:
     host: ${WP_SMTP_HOST:}
     port: ${WP_SMTP_PORT:587}
     username: ${WP_SMTP_USER:}
     password: ${WP_SMTP_PASSWORD:}
 webprotege:
+  mongo.ensure-indexes: true                             # create missing legacy indexes at startup (MongoIndexes)
   data-directory: ${WP_DATA_DIR:/srv/webprotege}        # same layout as legacy data.directory
   project.dormant-time: ${WP_PROJECT_DORMANT:PT1H}       # legacy project.dormant.time
   events.retention: PT10M                                # legacy was 60s
   events.max-batch: 200
-  auth:
-    api-key.enabled: true
-    local-login.enabled: ${WP_LOCAL_LOGIN:false}         # dev/admin fallback only
+  kernel:                                                # thread pools shared by all projects (KernelExecutors)
+    index-update-threads: 10                             # legacy INDEX_UPDATING_THREADS
+    revision-write-threads: 4
+  auth:                                                  # docs/01 §6 (S5)
+    api-key:
+      enabled: true                                      # Authorization: ApiKey <key>
+      allow-query-parameter: true                        # ?apiKey= on GET /download only, for download links
+    local-login:
+      enabled: ${WP_LOCAL_LOGIN:false}                   # dev/admin fallback only: POST /login -> bearer token
+      token-ttl: PT8H
     admin-realm-role: webprotege-admin                   # Keycloak realm role -> SYSTEM_ADMIN
   compat:
     legacy-data-api.enabled: true                        # /data/* compatibility layer, off after deprecation period

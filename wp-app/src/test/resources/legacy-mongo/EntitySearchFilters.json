@@ -1,0 +1,1 @@
+{"_id": "f5a6b7c8-d9e0-4f1a-8b23-4c5d6e7f8091", "projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "label": {"en": "Deprecated entities"}, "criteria": {"match": "EntityIsDeprecated"}}

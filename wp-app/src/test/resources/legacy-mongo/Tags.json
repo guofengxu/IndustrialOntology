@@ -1,0 +1,2 @@
+{"_id": "5d6e7f80-91a2-4b3c-8d4e-5f60718293a4", "projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "label": "Deprecated", "description": "Entities that should no longer be used", "color": "#ffffff", "backgroundColor": "#c0392b", "criteria": [{"match": "EntityIsDeprecated"}]}
+{"_id": "6e7f8091-a2b3-4c4d-9e5f-60718293a4b5", "projectId": "2a6d7a1e-5a3e-4c34-9f0b-3c4f5d6e7a81", "label": "Needs review", "description": "", "color": "#000000", "backgroundColor": "#f1c40f", "criteria": []}

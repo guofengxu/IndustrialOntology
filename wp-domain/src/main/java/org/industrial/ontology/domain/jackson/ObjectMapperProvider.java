@@ -52,6 +52,16 @@ public class ObjectMapperProvider implements Supplier<ObjectMapper> {
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(new Jdk8Module());
         mapper.registerModule(new GuavaModule());
+        mapper.registerModule(createOwlModule(dataFactory));
+        return mapper;
+    }
+
+    /**
+     * The serializers and deserializers of OWL entities, IRIs, literals and form control values that this mapper
+     * uses, for other mappers that must write and read the same JSON, such as the REST API's.
+     */
+    @Nonnull
+    public static SimpleModule createOwlModule(@Nonnull OWLDataFactory dataFactory) {
         SimpleModule module = new SimpleModule();
         module.addSerializer(OWLEntity.class, new OWLEntitySerializer());
         module.addSerializer(OWLProperty.class, new OWLEntitySerializer());
@@ -71,7 +81,6 @@ public class ObjectMapperProvider implements Supplier<ObjectMapper> {
         module.addDeserializer(OWLLiteral.class, new OWLLiteralDeserializer(dataFactory));
         module.addDeserializer(PrimitiveFormControlData.class, new FormControlValueDeserializer(dataFactory));
         module.addSerializer(IRI.class, new IriSerializer());
-        mapper.registerModule(module);
-        return mapper;
+        return module;
     }
 }
