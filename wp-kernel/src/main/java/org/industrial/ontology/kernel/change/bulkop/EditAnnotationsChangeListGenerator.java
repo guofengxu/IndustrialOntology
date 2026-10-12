@@ -2,6 +2,7 @@ package org.industrial.ontology.kernel.change.bulkop;
 
 
 
+import org.industrial.ontology.kernel.util.RegexTimeLimits;
 import com.google.common.collect.ImmutableSet;
 import org.industrial.ontology.kernel.api.index.AnnotationAssertionAxiomsBySubjectIndex;
 import org.industrial.ontology.kernel.api.index.ProjectOntologiesIndex;
@@ -136,7 +137,7 @@ public class EditAnnotationsChangeListGenerator implements ChangeListGenerator<B
         if(!matchesProperty(ax)) {
             return;
         }
-        var matcher = pattern.matcher(literal.getLiteral());
+        var matcher = RegexTimeLimits.matcher(pattern, literal.getLiteral());
         if(!matcher.find()) {
             return;
         }

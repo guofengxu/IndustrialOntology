@@ -535,6 +535,7 @@ public class ProjectContextFactory {
                                   changeManager,
                                   lock,
                                   resources,
+                                  ports.entityDiscussionThreadRepository(),
                                   Instant.now());
     }
 }

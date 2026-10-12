@@ -1,5 +1,7 @@
 package org.industrial.ontology.kernel.mansyntax.render;
 
+import org.industrial.ontology.kernel.render.HtmlBuilder;
+
 
 
 /**
@@ -14,11 +16,12 @@ public class PlainLinkRenderer implements LinkRendererPlugin {
 
     @Override
     public boolean isRenderableAsLink(String link) {
-        return link.startsWith("http");
+        // Only http(s) URLs; the legacy check accepted any scheme that starts with "http"
+        return link.startsWith("http://") || link.startsWith("https://");
     }
 
     @Override
     public LinkInfo renderLink(String link) {
-        return new LinkInfo(link, link);
+        return new LinkInfo(link, new HtmlBuilder().appendEscaped(link).toSafeHtml());
     }
 }

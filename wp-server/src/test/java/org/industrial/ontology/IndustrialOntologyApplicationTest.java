@@ -4,8 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import org.industrial.ontology.api.ontology.EntitiesController;
+import org.industrial.ontology.api.ontology.FramesController;
 import org.industrial.ontology.api.security.AuthProperties;
 import org.industrial.ontology.app.access.SharingService;
+import org.industrial.ontology.app.entity.BulkEditService;
+import org.industrial.ontology.app.entity.EntityRenderingService;
+import org.industrial.ontology.app.entity.EntityService;
+import org.industrial.ontology.app.entity.IndividualsService;
+import org.industrial.ontology.app.frame.AxiomsService;
+import org.industrial.ontology.app.frame.FrameService;
+import org.industrial.ontology.app.frame.ManchesterSyntaxService;
+import org.industrial.ontology.app.frame.OntologyService;
+import org.industrial.ontology.app.hierarchy.HierarchyService;
 import org.industrial.ontology.app.persistence.MongoMigration;
 import org.industrial.ontology.app.persistence.MongoTestServer;
 import org.industrial.ontology.app.project.KernelExecutors;
@@ -15,6 +26,8 @@ import org.industrial.ontology.app.project.ProjectRuntimeProperties;
 import org.industrial.ontology.app.project.ProjectService;
 import org.industrial.ontology.app.project.ProjectSettingsService;
 import org.industrial.ontology.app.project.persistence.MongoProjectDetailsRepository;
+import org.industrial.ontology.app.search.SearchService;
+import org.industrial.ontology.app.search.SearchSettingsService;
 import org.industrial.ontology.kernel.project.ProjectPorts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -127,6 +140,19 @@ class IndustrialOntologyApplicationTest {
         assertThat(application.getBean(ProjectService.class)).isNotNull();
         assertThat(application.getBean(ProjectSettingsService.class)).isNotNull();
         assertThat(application.getBean(SharingService.class)).isNotNull();
+    }
+
+    /**
+     * The ontology editing and search services of S7 come with the registry, and their controllers with them.
+     */
+    @Test
+    void theOntologyEditingAndSearchServicesAreWired() {
+        for (var service : new Class<?>[]{FrameService.class, ManchesterSyntaxService.class, OntologyService.class,
+                AxiomsService.class, EntityService.class, EntityRenderingService.class, BulkEditService.class,
+                IndividualsService.class, HierarchyService.class, SearchService.class, SearchSettingsService.class,
+                FramesController.class, EntitiesController.class}) {
+            assertThat(application.getBeanNamesForType(service)).as(service.getSimpleName()).hasSize(1);
+        }
     }
 
     @Test

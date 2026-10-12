@@ -1,6 +1,7 @@
 package org.industrial.ontology.app.error;
 
 import javax.annotation.Nonnull;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -50,5 +51,14 @@ public class WpException extends RuntimeException {
      */
     public int getStatus() {
         return status;
+    }
+
+    /**
+     * Details that the problem response carries next to the code, for example where a Manchester syntax frame failed
+     * to parse; none by default.
+     */
+    @Nonnull
+    public Map<String, Object> getProperties() {
+        return Map.of();
     }
 }

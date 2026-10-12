@@ -7,6 +7,7 @@ import org.industrial.ontology.kernel.api.repository.ProjectEntitySearchFiltersM
 
 import javax.annotation.Nonnull;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -15,7 +16,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>
  * The legacy {@code ProjectEntitySearchFiltersManagerImpl} also rebuilt the project's search filter index after
  * saving. That needs the loaded project's Lucene index, so it is the search settings service's job (S7); this port
- * only saves.
+ * only saves. Unlike the legacy manager, it saves only filters of its own project: the repository writes by filter
+ * id, so another project's filter id would have replaced that project's filter.
  */
 public class MongoEntitySearchFiltersManager implements ProjectEntitySearchFiltersManager {
 
@@ -35,8 +37,16 @@ public class MongoEntitySearchFiltersManager implements ProjectEntitySearchFilte
         return repository.getSearchFilters(projectId);
     }
 
+    /**
+     * @throws IllegalArgumentException for a filter of another project, or whose id another project's filter has
+     */
     @Override
     public void setSearchFilters(@Nonnull ImmutableList<EntitySearchFilter> searchFilters) {
+        for (var filter : searchFilters) {
+            checkArgument(filter.getProjectId().equals(projectId)
+                                  && repository.findProjectOf(filter.getId()).map(projectId::equals).orElse(true),
+                          "Search filter %s is not of project %s", filter.getId().getId(), projectId);
+        }
         repository.saveSearchFilters(searchFilters);
     }
 }

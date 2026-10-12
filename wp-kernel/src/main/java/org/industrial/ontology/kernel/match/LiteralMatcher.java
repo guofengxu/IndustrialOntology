@@ -2,6 +2,7 @@ package org.industrial.ontology.kernel.match;
 
 
 
+import org.industrial.ontology.kernel.util.RegexTimeLimits;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
 
@@ -47,7 +48,7 @@ public class LiteralMatcher implements Matcher<OWLLiteral> {
 
     public static LiteralMatcher forLexicalPattern(@Nonnull Pattern pattern) {
         return new LiteralMatcher(
-                lexicalValue -> pattern.matcher(lexicalValue).find(),
+                lexicalValue -> RegexTimeLimits.matcher(pattern, lexicalValue).find(),
                 langTag -> true,
                 datatype -> true
         );

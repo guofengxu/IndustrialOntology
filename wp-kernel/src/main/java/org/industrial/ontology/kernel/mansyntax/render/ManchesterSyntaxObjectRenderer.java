@@ -256,7 +256,8 @@ public class ManchesterSyntaxObjectRenderer implements OWLObjectRenderer {
                 classNamesBuilder.append(" deprecated");
             }
             stringBuilder.append("<span title=\"").append(entity.getEntityType().getName()).append(": ");
-            stringBuilder.append(entity.getIRI());
+            // Escaped, unlike in the legacy renderer: an IRI can hold quotes and close the attribute
+            stringBuilder.append(escaped(entity.getIRI().toString()));
             stringBuilder.append("\" class=\"").append(classNamesBuilder.toString().trim()).append("\">");
             stringBuilder.append(new HtmlBuilder().appendEscaped(shortForm).toSafeHtml().replace(" ", "&nbsp;"));
             stringBuilder.append("</span>");
@@ -349,6 +350,10 @@ public class ManchesterSyntaxObjectRenderer implements OWLObjectRenderer {
                     entity.accept(this);
                 }
             }
+        }
+
+        private static String escaped(String text) {
+            return new HtmlBuilder().appendEscaped(text).toSafeHtml();
         }
 
         private void renderEscapedIRI(IRI iri, StringBuilder sb) {
@@ -915,10 +920,11 @@ public class ManchesterSyntaxObjectRenderer implements OWLObjectRenderer {
         @Override
         public void visit(OWLLiteral node) {
             String literal = node.getLiteral();
+            // The datatype says nothing about the lexical form, which is escaped like any other literal
             if (node.isInteger() || node.isBoolean() || node.isDouble()) {
-                stringBuilder.append(literal);
+                stringBuilder.append(escaped(literal));
             } else if (node.isFloat()) {
-                stringBuilder.append(literal);
+                stringBuilder.append(escaped(literal));
                 stringBuilder.append("f");
             } else {
                 if (linkRenderer.isLink(node)) {
@@ -932,11 +938,11 @@ public class ManchesterSyntaxObjectRenderer implements OWLObjectRenderer {
                         if (node.hasLang()) {
                             if (literalStyle == LiteralStyle.BRACKETED) {
                                 stringBuilder.append("[language: ");
-                                stringBuilder.append(node.getLang());
+                                stringBuilder.append(escaped(node.getLang()));
                                 stringBuilder.append("]");
                             } else {
                                 stringBuilder.append("@");
-                                stringBuilder.append(node.getLang());
+                                stringBuilder.append(escaped(node.getLang()));
                             }
                             stringBuilder.append("</span>");
                         }
