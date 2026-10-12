@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import org.industrial.ontology.api.history.EventsController;
+import org.industrial.ontology.api.history.RevisionsController;
 import org.industrial.ontology.api.ontology.EntitiesController;
 import org.industrial.ontology.api.ontology.FramesController;
 import org.industrial.ontology.api.security.AuthProperties;
@@ -12,6 +14,9 @@ import org.industrial.ontology.app.entity.BulkEditService;
 import org.industrial.ontology.app.entity.EntityRenderingService;
 import org.industrial.ontology.app.entity.EntityService;
 import org.industrial.ontology.app.entity.IndividualsService;
+import org.industrial.ontology.app.event.ProjectEventBroadcaster;
+import org.industrial.ontology.app.event.ProjectEventService;
+import org.industrial.ontology.app.event.ProjectEventStreamsLifecycle;
 import org.industrial.ontology.app.frame.AxiomsService;
 import org.industrial.ontology.app.frame.FrameService;
 import org.industrial.ontology.app.frame.ManchesterSyntaxService;
@@ -26,6 +31,7 @@ import org.industrial.ontology.app.project.ProjectRuntimeProperties;
 import org.industrial.ontology.app.project.ProjectService;
 import org.industrial.ontology.app.project.ProjectSettingsService;
 import org.industrial.ontology.app.project.persistence.MongoProjectDetailsRepository;
+import org.industrial.ontology.app.revision.RevisionService;
 import org.industrial.ontology.app.search.SearchService;
 import org.industrial.ontology.app.search.SearchSettingsService;
 import org.industrial.ontology.kernel.project.ProjectPorts;
@@ -36,6 +42,7 @@ import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2Res
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.context.WebServerGracefulShutdownLifecycle;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
@@ -153,6 +160,23 @@ class IndustrialOntologyApplicationTest {
                 FramesController.class, EntitiesController.class}) {
             assertThat(application.getBeanNamesForType(service)).as(service.getSimpleName()).hasSize(1);
         }
+    }
+
+    /**
+     * The revision and event services of S8 come with the registry. The event streams end before the web server's
+     * graceful shutdown waits for active requests, which a stream never stops being by itself.
+     */
+    @Test
+    void theRevisionAndEventServicesAreWired() {
+        for (var service : new Class<?>[]{RevisionService.class, ProjectEventService.class,
+                ProjectEventBroadcaster.class, RevisionsController.class, EventsController.class}) {
+            assertThat(application.getBeanNamesForType(service)).as(service.getSimpleName()).hasSize(1);
+        }
+        assertThat(application.getBean(ProjectEventStreamsLifecycle.class).getPhase())
+                .isGreaterThan(WebServerGracefulShutdownLifecycle.SMART_LIFECYCLE_PHASE);
+        var events = application.getBean(ProjectRuntimeProperties.class).events();
+        assertThat(events.maxBatch()).isEqualTo(200);
+        assertThat(events.heartbeat()).isEqualTo(Duration.ofSeconds(25));
     }
 
     @Test

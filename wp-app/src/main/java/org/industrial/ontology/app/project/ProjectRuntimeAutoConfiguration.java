@@ -63,7 +63,8 @@ public class ProjectRuntimeAutoConfiguration {
                                          kernelExecutors.threadPools(),
                                          projectPorts,
                                          builtInPrefixDeclarations,
-                                         properties.events().retention());
+                                         properties.events().retention(),
+                                         properties.events().maxBatch());
     }
 
     @Bean(destroyMethod = "closeAll")

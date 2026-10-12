@@ -337,7 +337,8 @@ public class ManchesterSyntaxObjectRenderer implements OWLObjectRenderer {
             renderSpace();
             stringBuilder.append("<span class=\"ms-annotation-val\">");
             node.getValue().accept(this);
-            stringBuilder.append("<span>");
+            // The legacy renderer opened a third span here instead of closing the second
+            stringBuilder.append("</span>");
         }
 
         @Override
@@ -1016,7 +1017,8 @@ public class ManchesterSyntaxObjectRenderer implements OWLObjectRenderer {
 
         @Override
         public void visit(OWLAnonymousIndividual individual) {
-            stringBuilder.append(individual.getID().getID());
+            // A node id comes from the uploaded document (nodeID attributes, _: labels)
+            stringBuilder.append(escaped(individual.getID().getID()));
         }
 
         @Override
@@ -1069,7 +1071,7 @@ public class ManchesterSyntaxObjectRenderer implements OWLObjectRenderer {
         public void visit(SWRLVariable node) {
             String iriShortForm = iriSfp.getShortForm(node.getIRI());
             stringBuilder.append("?");
-            stringBuilder.append(iriShortForm);
+            stringBuilder.append(escaped(iriShortForm));
         }
 
         @Override

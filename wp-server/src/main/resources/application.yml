@@ -23,7 +23,11 @@ webprotege:
   data-directory: ${WP_DATA_DIR:/srv/webprotege}        # same layout as legacy data.directory
   project.dormant-time: ${WP_PROJECT_DORMANT:PT1H}       # legacy project.dormant.time
   events.retention: PT10M                                # legacy was 60s
-  events.max-batch: 200
+  events.max-batch: 200                                  # larger batches are neither kept nor streamed (legacy)
+  events.heartbeat: PT25S                                # SSE ping; also re-checks ViewProject (S8)
+  events.stream-timeout: PT30M                           # clients reconnect with Last-Event-ID
+  events.max-subscriptions-per-user: 20
+  events.max-queued-batches: 1000                        # a slower stream is closed and resumes
   kernel:                                                # thread pools shared by all projects (KernelExecutors)
     index-update-threads: 10                             # legacy INDEX_UPDATING_THREADS
     revision-write-threads: 4

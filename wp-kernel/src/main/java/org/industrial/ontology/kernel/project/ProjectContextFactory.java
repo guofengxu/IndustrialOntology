@@ -155,6 +155,7 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -186,7 +187,12 @@ public class ProjectContextFactory {
 
     private final Duration eventRetention;
 
+    private final int maxEventBatchSize;
+
     /**
+     * A factory whose projects record event batches of up to {@link ProjectEventManager#DEFAULT_MAX_BATCH_SIZE}
+     * events.
+     *
      * @param eventRetention how long project events stay readable with {@code getEventsFromTag}
      *                       ({@link ProjectEventManager#DEFAULT_RETENTION} by default, docs/01 §3.3)
      */
@@ -195,11 +201,28 @@ public class ProjectContextFactory {
                                  @Nonnull ProjectPorts ports,
                                  @Nonnull BuiltInPrefixDeclarations builtInPrefixDeclarations,
                                  @Nonnull Duration eventRetention) {
+        this(dataDirectoryLayout, threadPools, ports, builtInPrefixDeclarations, eventRetention,
+             ProjectEventManager.DEFAULT_MAX_BATCH_SIZE);
+    }
+
+    /**
+     * @param eventRetention    how long project events stay readable with {@code getEventsFromTag}
+     * @param maxEventBatchSize the largest batch of events that is recorded ({@code webprotege.events.max-batch});
+     *                          larger batches are neither recorded nor delivered, as in the legacy event manager
+     */
+    public ProjectContextFactory(@Nonnull DataDirectoryLayout dataDirectoryLayout,
+                                 @Nonnull KernelThreadPools threadPools,
+                                 @Nonnull ProjectPorts ports,
+                                 @Nonnull BuiltInPrefixDeclarations builtInPrefixDeclarations,
+                                 @Nonnull Duration eventRetention,
+                                 int maxEventBatchSize) {
         this.dataDirectoryLayout = checkNotNull(dataDirectoryLayout);
         this.threadPools = checkNotNull(threadPools);
         this.ports = checkNotNull(ports);
         this.builtInPrefixDeclarations = checkNotNull(builtInPrefixDeclarations);
         this.eventRetention = checkNotNull(eventRetention);
+        checkArgument(maxEventBatchSize > 0, "maxEventBatchSize must be positive: %s", maxEventBatchSize);
+        this.maxEventBatchSize = maxEventBatchSize;
     }
 
     /**
@@ -421,7 +444,7 @@ public class ProjectContextFactory {
         var eventManager = resources.add("event manager",
                                          new ProjectEventManager(projectId,
                                                                  eventRetention,
-                                                                 ProjectEventManager.DEFAULT_MAX_BATCH_SIZE,
+                                                                 maxEventBatchSize,
                                                                  threadPools.eventPurges()),
                                          ProjectEventManager::dispose);
         var changeSubjectProvider = new OntologyChangeSubjectProvider(

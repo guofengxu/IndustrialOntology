@@ -86,27 +86,44 @@ public class ProjectChangesManager {
         return subjectProvider.getSubject(axiom);
     }
 
+    /**
+     * A page of the changes, newest revision first: one {@link ProjectChange} per revision, or with a subject one per
+     * revision that changed the subject.
+     * <p>
+     * Unlike the legacy method, the page request also applies to the changes of a subject (the legacy method returned
+     * them all, oldest first, as one page), and the page count and total are those of all the changes rather than of
+     * the page (the legacy count was one too many when the revisions filled the last page exactly).
+     */
     public Page<ProjectChange> getProjectChanges(Optional<OWLEntity> subject, PageRequest pageRequest) {
         ImmutableList<Revision> revisions = revisionManager.getRevisions();
+        var pageSize = pageRequest.getPageSize();
         if (subject.isPresent()) {
-            // We need to scan revisions to find the ones containing a particular subject
-            // We ignore the page request here.
-            // This needs reworking really, but the number of changes per entity is usually small
-            // so this works for now.
-            ImmutableList.Builder<ProjectChange> changes = ImmutableList.builder();
-            for (Revision revision : revisions) {
-                getProjectChangesForRevision(revision, subject, changes);
+            // The revisions that changed the subject are found from the cached changes by subject, which need no
+            // rendering; only those of the page are rendered (the legacy method rendered all of them)
+            var iri = subject.map(OWLEntity::getIRI);
+            var matching = new ArrayList<Revision>();
+            for (Revision revision : revisions.reverse()) {
+                if (getCachedChanges(revision, iri) != null) {
+                    matching.add(revision);
+                }
             }
-            ImmutableList<ProjectChange> theChanges = changes.build();
-            return new Page<>(1, 1, theChanges, theChanges.size());
+            ImmutableList.Builder<ProjectChange> changes = ImmutableList.builder();
+            matching.stream().skip(pageRequest.getSkip()).limit(pageSize)
+                    .forEach(revision -> getProjectChangesForRevision(revision, subject, changes));
+            return new Page<>(pageRequest.getPageNumber(), pageCount(matching.size(), pageSize), changes.build(),
+                              matching.size());
         } else {
             // Pages are in reverse order
             ImmutableList.Builder<ProjectChange> changes = ImmutableList.builder();
-            revisions.reverse().stream().skip(pageRequest.getSkip()).limit(pageRequest.getPageSize()).forEach(revision -> getProjectChangesForRevision(revision, subject, changes));
+            revisions.reverse().stream().skip(pageRequest.getSkip()).limit(pageSize).forEach(revision -> getProjectChangesForRevision(revision, subject, changes));
             ImmutableList<ProjectChange> changeList = changes.build();
-            int pageCount = (revisions.size() / pageRequest.getPageSize()) + 1;
-            return new Page<>(pageRequest.getPageNumber(), pageCount, changeList, changeList.size());
+            return new Page<>(pageRequest.getPageNumber(), pageCount(revisions.size(), pageSize), changeList,
+                              revisions.size());
         }
+    }
+
+    private static int pageCount(int total, int pageSize) {
+        return Math.max(1, (total + pageSize - 1) / pageSize);
     }
 
     public ImmutableList<ProjectChange> getProjectChangesForSubjectInRevision(OWLEntity subject, Revision revision) {
@@ -116,25 +133,17 @@ public class ProjectChangesManager {
     }
 
     private void getProjectChangesForRevision(Revision revision, Optional<OWLEntity> subject, ImmutableList.Builder<ProjectChange> changesBuilder) {
-        if (!cache.containsRow(revision.getRevisionNumber())) {
-            logger.debug("{} Building cache for revision {}", projectId, revision.getRevisionNumber().getValue());
-            var stopwatch = Stopwatch.createStarted();
-            var changeRecordsBySubject = getChangesBySubject(revision);
-            changeRecordsBySubject.asMap().forEach((subj, records) -> {
-                cache.put(revision.getRevisionNumber(), subj, ImmutableList.copyOf(records));
-            });
-            logger.debug("{} Cached revision {} in {} ms", projectId, revision.getRevisionNumber().getValue(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        }
         List<OntologyChange> limitedRecords = new ArrayList<>();
         final int totalChanges;
         if (subject.isPresent()) {
-            List<OntologyChange> records = cache.get(revision.getRevisionNumber(), subject.map(OWLEntity::getIRI));
+            List<OntologyChange> records = getCachedChanges(revision, subject.map(OWLEntity::getIRI));
             if (records == null) {
                 // Nothing in this revision that changes the subject
                 return;
             }
             totalChanges = records.size();
-            limitedRecords.addAll(records);
+            // As for a whole revision: an import changes thousands of axioms of some entities
+            records.stream().limit(DEFAULT_CHANGE_LIMIT).forEach(limitedRecords::add);
         } else {
             totalChanges = revision.getSize();
             revision.getChanges().stream().limit(DEFAULT_CHANGE_LIMIT).forEach(limitedRecords::add);
@@ -144,15 +153,31 @@ public class ProjectChangesManager {
         sortDiff(axiomDiffElements);
         List<DiffElement<String, String>> renderedDiffElements = renderDiffElements(axiomDiffElements);
         int pageElements = renderedDiffElements.size();
-        int pageCount;
-        if (pageElements == 0) {
-            pageCount = 1;
-        } else {
-            pageCount = totalChanges / pageElements + (totalChanges % pageElements);
-        }
+        // The legacy count added the remainder instead of rounding up
+        int pageCount = pageElements == 0 ? 1 : pageCount(totalChanges, pageElements);
         Page<DiffElement<String, String>> page = new Page<>(1, pageCount, renderedDiffElements, totalChanges);
         ProjectChange projectChange = ProjectChange.get(revision.getRevisionNumber(), revision.getUserId(), revision.getTimestamp(), revision.getHighLevelDescription(), totalChanges, page);
         changesBuilder.add(projectChange);
+    }
+
+    /**
+     * The revision's changes of the subject, or {@code null} if it has none. The cache is filled a revision at a time
+     * and read by concurrent readers (the services read under the project's read lock, which many threads hold at
+     * once); the legacy class did not guard it.
+     */
+    private List<OntologyChange> getCachedChanges(Revision revision, Optional<IRI> subject) {
+        synchronized (cache) {
+            if (!cache.containsRow(revision.getRevisionNumber())) {
+                logger.debug("{} Building cache for revision {}", projectId, revision.getRevisionNumber().getValue());
+                var stopwatch = Stopwatch.createStarted();
+                var changeRecordsBySubject = getChangesBySubject(revision);
+                changeRecordsBySubject.asMap().forEach((subj, records) -> {
+                    cache.put(revision.getRevisionNumber(), subj, ImmutableList.copyOf(records));
+                });
+                logger.debug("{} Cached revision {} in {} ms", projectId, revision.getRevisionNumber().getValue(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            }
+            return cache.get(revision.getRevisionNumber(), subject);
+        }
     }
 
     private List<DiffElement<String, String>> renderDiffElements(List<DiffElement<String, OntologyChange>> axiomDiffElements) {

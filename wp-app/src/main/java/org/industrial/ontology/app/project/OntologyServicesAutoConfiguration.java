@@ -12,6 +12,7 @@ import org.industrial.ontology.app.frame.OntologyService;
 import org.industrial.ontology.app.hierarchy.HierarchyService;
 import org.industrial.ontology.app.issues.persistence.DiscussionThreadRepository;
 import org.industrial.ontology.app.project.persistence.MongoProjectDetailsRepository;
+import org.industrial.ontology.app.revision.RevisionService;
 import org.industrial.ontology.app.search.SearchService;
 import org.industrial.ontology.app.search.SearchSettingsService;
 import org.industrial.ontology.app.search.persistence.EntitySearchFilterRepository;
@@ -22,8 +23,8 @@ import org.springframework.context.annotation.Bean;
 
 /**
  * The ontology editing and search services of stage S7 (docs/01 §5.1): frames, Manchester syntax, ontologies and
- * axioms, entities, hierarchies, individuals and search. They work on loaded projects, so like the project services
- * they exist only where the {@link ProjectRegistry} does (wp-server).
+ * axioms, entities, hierarchies, individuals and search, and the revision service of stage S8. They work on loaded
+ * projects, so like the project services they exist only where the {@link ProjectRegistry} does (wp-server).
  */
 @AutoConfiguration(after = ProjectRuntimeAutoConfiguration.class)
 @ConditionalOnBean(ProjectRegistry.class)
@@ -104,5 +105,11 @@ public class OntologyServicesAutoConfiguration {
     public SearchSettingsService searchSettingsService(ProjectContexts projectContexts,
                                                        EntitySearchFilterRepository entitySearchFilterRepository) {
         return new SearchSettingsService(projectContexts, entitySearchFilterRepository);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RevisionService revisionService(ProjectContexts projectContexts) {
+        return new RevisionService(projectContexts);
     }
 }

@@ -15,12 +15,14 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
@@ -39,7 +41,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *     <li>retention and batch limit are configurable ({@code webprotege.events.retention}, default 10 minutes
  *     instead of the legacy 60 seconds, and {@code webprotege.events.max-batch}, docs/00 §8);</li>
  *     <li>expired buckets are purged on a scheduler shared by all projects (wp-app's {@code KernelExecutors});
- *     {@link #dispose()} cancels this project's task but never shuts the scheduler down (docs/01 §3.4).</li>
+ *     {@link #dispose()} cancels this project's task but never shuts the scheduler down (docs/01 §3.4);</li>
+ *     <li>listeners receive each batch with its tag, one batch at a time and in tag order, and the retained batches
+ *     can be read back with their tags ({@link #getEventBatchesAfter}), so that a subscriber that registers and then
+ *     catches up neither misses nor repeats a batch (stage S8).</li>
  * </ul>
  */
 public class ProjectEventManager implements HasDispose, HasPostEvents<ProjectEvent> {
@@ -69,10 +74,22 @@ public class ProjectEventManager implements HasDispose, HasPostEvents<ProjectEve
     @Nonnull
     private final LongSupplier clock;
 
-    private final List<Consumer<List<ProjectEvent>>> listeners = new CopyOnWriteArrayList<>();
+    private final List<Consumer<EventBatch>> listeners = new CopyOnWriteArrayList<>();
+
+    /**
+     * Held from taking a tag until the listeners have had the batch, so that listeners see the batches in tag order.
+     * Change posts are already serial (the change manager posts within its change lock); other posters are not.
+     */
+    private final Lock postLock = new ReentrantLock();
 
     @Nonnull
     private final ScheduledFuture<?> purgeTask;
+
+    /**
+     * Names this run of the project's tags, which restart when the project is loaded again; a client's tag is only
+     * meaningful together with the epoch it came from.
+     */
+    private final String epoch = UUID.randomUUID().toString().substring(0, 8);
 
     private EventTag currentTag = EventTag.getFirst();
 
@@ -120,24 +137,51 @@ public class ProjectEventManager implements HasDispose, HasPostEvents<ProjectEve
             logger.debug("{} Not recording a batch of {} events (limit {})", projectId, events.size(), maxBatchSize);
             return getCurrentTag();
         }
-        final EventTag tag;
-        writeLock.lock();
-        try {
-            currentTag = currentTag.next();
-            tag = currentTag;
-            eventQueue.add(new EventBucket(clock.getAsLong(), List.copyOf(events), tag));
-        } finally {
-            writeLock.unlock();
-        }
         var distinct = List.copyOf(new LinkedHashSet<>(events));
-        for (var listener : listeners) {
+        postLock.lock();
+        try {
+            final EventTag tag;
+            writeLock.lock();
             try {
-                listener.accept(distinct);
-            } catch (RuntimeException e) {
-                logger.error("{} Project event listener failed", projectId, e);
+                currentTag = currentTag.next();
+                tag = currentTag;
+                eventQueue.add(new EventBucket(clock.getAsLong(), distinct, tag));
+            } finally {
+                writeLock.unlock();
             }
+            var batch = new EventBatch(tag, distinct);
+            for (var listener : listeners) {
+                try {
+                    listener.accept(batch);
+                } catch (RuntimeException e) {
+                    logger.error("{} Project event listener failed", projectId, e);
+                }
+            }
+            return tag;
+        } finally {
+            postLock.unlock();
         }
-        return tag;
+    }
+
+    /**
+     * The retained batches posted after {@code since}, oldest first, each with its tag. Whether they are all of the
+     * batches posted after it is told by {@link #isRetainedFrom isRetainedFrom(since.next())}.
+     */
+    @Nonnull
+    public List<EventBatch> getEventBatchesAfter(@Nonnull EventTag since) {
+        checkNotNull(since, "tag must not be null");
+        readLock.lock();
+        try {
+            var batches = new ArrayList<EventBatch>();
+            for (EventBucket bucket : eventQueue) {
+                if (bucket.tag().compareTo(since) > 0) {
+                    batches.add(new EventBatch(bucket.tag(), bucket.events()));
+                }
+            }
+            return batches;
+        } finally {
+            readLock.unlock();
+        }
     }
 
     /** All retained events posted at or after {@code fromTag}, without duplicates. */
@@ -177,6 +221,14 @@ public class ProjectEventManager implements HasDispose, HasPostEvents<ProjectEve
         }
     }
 
+    /**
+     * The epoch of this event manager's tags: eight hexadecimal digits, different for every load of the project.
+     */
+    @Nonnull
+    public String epoch() {
+        return epoch;
+    }
+
     public EventTag getCurrentTag() {
         readLock.lock();
         try {
@@ -187,12 +239,13 @@ public class ProjectEventManager implements HasDispose, HasPostEvents<ProjectEve
     }
 
     /**
-     * Registers a listener for every posted batch. Listeners run on the posting thread, after the project write
-     * lock has been released, and must not block.
+     * Registers a listener for every batch posted from now on. Listeners run on the posting thread, after the project
+     * write lock has been released, one batch at a time in tag order; they must not block, as later posts wait for
+     * them.
      *
      * @return a handle that unregisters the listener
      */
-    public AutoCloseable addListener(@Nonnull Consumer<List<ProjectEvent>> listener) {
+    public AutoCloseable addListener(@Nonnull Consumer<EventBatch> listener) {
         listeners.add(checkNotNull(listener));
         return () -> listeners.remove(listener);
     }
