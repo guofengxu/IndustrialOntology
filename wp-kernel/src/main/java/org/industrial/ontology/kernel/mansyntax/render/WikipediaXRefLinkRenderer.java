@@ -1,5 +1,7 @@
 package org.industrial.ontology.kernel.mansyntax.render;
 
+import org.industrial.ontology.kernel.render.HtmlBuilder;
+
 
 
 /**
@@ -19,6 +21,6 @@ public class WikipediaXRefLinkRenderer implements LinkRendererPlugin {
 
     @Override
     public LinkInfo renderLink(String link) {
-        return new LinkInfo("http://wikipedia.org/wiki/" + link, link);
+        return new LinkInfo("http://wikipedia.org/wiki/" + link, new HtmlBuilder().appendEscaped(link).toSafeHtml());
     }
 }

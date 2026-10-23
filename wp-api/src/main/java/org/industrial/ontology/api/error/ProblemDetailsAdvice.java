@@ -24,7 +24,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  * The one place where exceptions become responses (docs/00 §4.5): RFC 7807 problem details with a stable
  * {@code code} (docs/02 §1). Controllers do not catch exceptions.
  * <ul>
- *     <li>{@link WpException}: its status and code, for example 403 {@code PERMISSION_DENIED};</li>
+ *     <li>{@link WpException}: its status, code and properties, for example 403 {@code PERMISSION_DENIED}, or 400
+ *     {@code MANCHESTER_SYNTAX_ERROR} with the line and column;</li>
  *     <li>the legacy kernel's {@code PermissionDeniedException}: 403 {@code PERMISSION_DENIED} as well;</li>
  *     <li>Spring MVC's own exceptions (unreadable body, missing parameter, unsupported method...): their status, with
  *     the status name as the code; a multipart upload over the size limit is 413 {@code UPLOAD_TOO_LARGE}.</li>
@@ -36,7 +37,9 @@ public class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
     @ExceptionHandler(WpException.class)
     public ResponseEntity<ProblemDetail> handle(WpException exception, HttpServletRequest request) {
         var status = HttpStatus.valueOf(exception.getStatus());
-        return response(Problems.problem(status, exception.getCode(), exception.getMessage(), request));
+        var problem = Problems.problem(status, exception.getCode(), exception.getMessage(), request);
+        exception.getProperties().forEach(problem::setProperty);
+        return response(problem);
     }
 
     @ExceptionHandler(org.industrial.ontology.domain.permissions.PermissionDeniedException.class)

@@ -2,6 +2,7 @@ package org.industrial.ontology.kernel.match;
 
 
 
+import org.industrial.ontology.kernel.util.RegexTimeLimits;
 import javax.annotation.Nonnull;
 import java.util.regex.Pattern;
 
@@ -26,6 +27,6 @@ public class StringContainsRegexMatchMatcher implements Matcher<String> {
 
     @Override
     public boolean matches(@Nonnull String value) {
-        return pattern.matcher(value).find();
+        return RegexTimeLimits.matcher(pattern, value).find();
     }
 }

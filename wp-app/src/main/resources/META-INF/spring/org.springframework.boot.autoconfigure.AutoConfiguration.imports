@@ -3,3 +3,4 @@ org.industrial.ontology.app.persistence.MongoPersistenceAutoConfiguration
 org.industrial.ontology.app.access.AccessAutoConfiguration
 org.industrial.ontology.app.project.ProjectPortsAutoConfiguration
 org.industrial.ontology.app.project.ProjectServicesAutoConfiguration
+org.industrial.ontology.app.project.OntologyServicesAutoConfiguration

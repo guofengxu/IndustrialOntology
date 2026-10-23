@@ -230,7 +230,8 @@ public class ChangeManager implements HasApplyChanges {
      *                            party ontology changes will take place between the
      *                            {@link ChangeListGenerator#generateChanges(ChangeGenerationContext)}
      *                            method being called and the changes being applied.
-     * @return A {@link ChangeApplicationResult} that describes the changes which took place an any renaminings.
+     * @return A {@link ChangeApplicationResult} that describes the changes which took place an any renaminings, with
+     * the revision that recorded them if any change was effective.
      * @throws NullPointerException if any parameters are {@code null}.
      * @throws RuntimeException     from {@link ChangePermissionChecker} if the user may not create the fresh
      *                              entities that the changes mint.
@@ -309,12 +310,14 @@ public class ChangeManager implements HasApplyChanges {
                 eventTranslatorManager.prepareForOntologyChanges(effectiveChanges);
                 var renameMap = renameMapFactory.create(tempIri2MintedIri);
                 var renamedResult = getRenamedResult(changeListGenerator, changeList.getResult(), renameMap);
-                changeApplicationResult = new ChangeApplicationResult<>(renamedResult, effectiveChanges, renameMap);
+                var appliedChanges = new ChangeApplicationResult<>(renamedResult, effectiveChanges, renameMap);
                 if (!effectiveChanges.isEmpty()) {
-                    revision = Optional.of(logAndProcessAppliedChanges(userId, changeListGenerator,
-                                                                       changeApplicationResult));
+                    var loggedRevision = logAndProcessAppliedChanges(userId, changeListGenerator, appliedChanges);
+                    revision = Optional.of(loggedRevision);
+                    changeApplicationResult = appliedChanges.withRevision(loggedRevision);
                 } else {
                     revision = Optional.empty();
+                    changeApplicationResult = appliedChanges;
                 }
             } finally {
                 // Release for reads

@@ -3,19 +3,24 @@ package org.industrial.ontology.app.search.persistence;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import org.bson.Document;
 import org.industrial.ontology.app.persistence.JacksonDocumentMapper;
 import org.industrial.ontology.domain.core.ProjectId;
 import org.industrial.ontology.domain.search.EntitySearchFilter;
+import org.industrial.ontology.domain.search.EntitySearchFilterId;
 import org.springframework.data.mongodb.core.MongoOperations;
 
 import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
@@ -73,6 +78,54 @@ public class EntitySearchFilterRepository {
                                         new ReplaceOptions().upsert(true)))
                                 .toList();
             collection.bulkWrite(writes);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    /**
+     * The project that has a filter with the id, if any.
+     */
+    @Nonnull
+    public Optional<ProjectId> findProjectOf(@Nonnull EntitySearchFilterId filterId) {
+        readLock.lock();
+        try {
+            var document = collection.find(new Document(EntitySearchFilter.ID, filterId.getId())).first();
+            return Optional.ofNullable(document)
+                           .map(found -> found.getString(EntitySearchFilter.PROJECT_ID))
+                           .map(ProjectId::get);
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    /**
+     * Makes the filters the project's only filters: the project's filters that are not in the list are deleted, the
+     * others inserted or replaced. Every filter must be of the project; the caller checks that no filter id belongs
+     * to another project. Not atomic: Mongo has no transactions here (single server), as for the legacy repository.
+     */
+    public void replaceSearchFilters(@Nonnull ProjectId projectId, @Nonnull List<EntitySearchFilter> filters) {
+        checkArgument(filters.stream().allMatch(filter -> filter.getProjectId().equals(projectId)),
+                      "Every filter must be of project %s", projectId);
+        writeLock.lock();
+        try {
+            if (!filters.isEmpty()) {
+                // Matching the project too: should another project have the id after all, the upsert inserts a
+                // second document with the id, which the unique _id refuses, instead of replacing that filter
+                collection.bulkWrite(filters.stream()
+                                            .map(mapper::toDocument)
+                                            .map(document -> new ReplaceOneModel<>(
+                                                    new Document(EntitySearchFilter.ID,
+                                                                 document.get(EntitySearchFilter.ID))
+                                                            .append(EntitySearchFilter.PROJECT_ID,
+                                                                    projectId.getId()),
+                                                    document,
+                                                    new ReplaceOptions().upsert(true)))
+                                            .toList());
+            }
+            var kept = filters.stream().map(filter -> filter.getId().getId()).toList();
+            collection.deleteMany(Filters.and(Filters.eq(EntitySearchFilter.PROJECT_ID, projectId.getId()),
+                                              Filters.nin(EntitySearchFilter.ID, kept)));
         } finally {
             writeLock.unlock();
         }

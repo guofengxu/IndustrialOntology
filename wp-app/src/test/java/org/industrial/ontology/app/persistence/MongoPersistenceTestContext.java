@@ -4,6 +4,7 @@ import com.mongodb.client.MongoDatabase;
 import org.industrial.ontology.app.access.AccessAutoConfiguration;
 import org.industrial.ontology.app.project.ProjectPortsAutoConfiguration;
 import org.industrial.ontology.app.project.ProjectRuntimeAutoConfiguration;
+import org.industrial.ontology.app.project.OntologyServicesAutoConfiguration;
 import org.industrial.ontology.app.project.ProjectServicesAutoConfiguration;
 import org.industrial.ontology.kernel.project.DataDirectoryLayout;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -45,8 +46,8 @@ public final class MongoPersistenceTestContext implements AutoCloseable {
     }
 
     /**
-     * What wp-server has of wp-app (S6): the persistence, the access services, {@code MongoProjectPorts}, the project
-     * runtime over the data directory, and the project services.
+     * What wp-server has of wp-app (S6, S7): the persistence, the access services, {@code MongoProjectPorts}, the
+     * project runtime over the data directory, the project services and the ontology editing and search services.
      */
     public static MongoPersistenceTestContext startWithProjects(Path dataDirectory, String... properties) {
         var context = new AnnotationConfigApplicationContext();
@@ -55,7 +56,8 @@ public final class MongoPersistenceTestContext implements AutoCloseable {
                      List.of(AccessAutoConfiguration.class,
                              ProjectPortsAutoConfiguration.class,
                              ProjectRuntimeAutoConfiguration.class,
-                             ProjectServicesAutoConfiguration.class),
+                             ProjectServicesAutoConfiguration.class,
+                             OntologyServicesAutoConfiguration.class),
                      properties);
     }
 

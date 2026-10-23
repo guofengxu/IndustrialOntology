@@ -1,5 +1,7 @@
 package org.industrial.ontology.kernel.mansyntax.render;
 
+import org.industrial.ontology.kernel.render.HtmlBuilder;
+
 
 
 import com.google.common.collect.Sets;
@@ -51,7 +53,7 @@ public class ImageLinkRenderer implements LinkRendererPlugin {
     public LinkInfo renderLink(String link) {
         return new LinkInfo(link,
                     "<span class=\"ms-img\">"
-                            + "<img src=\"" + link + "\"/>"
+                            + "<img src=\"" + new HtmlBuilder().appendEscaped(link).toSafeHtml() + "\"/>"
                     + "</span>");
     }
 }

@@ -69,9 +69,13 @@ public class DefaultHttpLinkRenderer implements HttpLinkRenderer {
         builder.append("</span>");
     }
 
+    /**
+     * @param display HTML, escaped by the plugin that made it
+     */
     private void renderPlainLink(String link, String display, StringBuilder builder) {
         builder.append("<a target=\"_blank\" href=\"");
-        builder.append(link);
+        // Escaped, unlike in the legacy renderer: a link can hold quotes and close the attribute
+        builder.append(new HtmlBuilder().appendEscaped(link).toSafeHtml());
         builder.append("\">");
         builder.append("<span class=\"iri\">");
         builder.append(display);

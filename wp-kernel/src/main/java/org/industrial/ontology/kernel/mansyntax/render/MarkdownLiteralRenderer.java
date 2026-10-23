@@ -1,5 +1,7 @@
 package org.industrial.ontology.kernel.mansyntax.render;
 
+import org.industrial.ontology.kernel.render.HtmlBuilder;
+
 
 
 
@@ -16,7 +18,9 @@ public class MarkdownLiteralRenderer implements LiteralRenderer {
     @Override
     public void renderLiteral(String literal, StringBuilder stringBuilder) {
         // TODO:  Won't work until we move to Java 7
-        stringBuilder.append(literal);
+        // The legacy renderer appended the literal as it was, so a literal could put markup and scripts into the
+        // HTML descriptions that are shown to everyone who may view the project.
+        stringBuilder.append(new HtmlBuilder().appendEscaped(literal).toSafeHtml());
 //        try {
 //            stringBuilder.append(Processor.process(literal));
 //            Markdown4jProcessor markdown4jProcessor = new Markdown4jProcessor();

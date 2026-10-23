@@ -1,6 +1,8 @@
 package org.industrial.ontology.kernel.project;
 
+import com.google.common.base.Suppliers;
 import org.industrial.ontology.domain.core.ProjectId;
+import org.industrial.ontology.kernel.api.port.EntityDiscussionThreadRepository;
 import org.industrial.ontology.kernel.change.ChangeManager;
 import org.industrial.ontology.kernel.crud.ProjectEntityCrudKitHandlerCache;
 import org.industrial.ontology.kernel.entity.EntityNodeRenderer;
@@ -26,6 +28,7 @@ import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -89,6 +92,8 @@ public final class ProjectContext implements AutoCloseable {
 
     private final ProjectResources resources;
 
+    private final Supplier<ProjectComponents> components;
+
     private final AtomicBoolean closed = new AtomicBoolean();
 
     private volatile Instant lastAccess;
@@ -115,6 +120,7 @@ public final class ProjectContext implements AutoCloseable {
                    @Nonnull ChangeManager changeManager,
                    @Nonnull ReadWriteLock lock,
                    @Nonnull ProjectResources resources,
+                   @Nonnull EntityDiscussionThreadRepository discussionThreadRepository,
                    @Nonnull Instant loadedAt) {
         this.projectId = checkNotNull(projectId);
         this.dataFactory = checkNotNull(dataFactory);
@@ -138,6 +144,8 @@ public final class ProjectContext implements AutoCloseable {
         this.changeManager = checkNotNull(changeManager);
         this.lock = checkNotNull(lock);
         this.resources = checkNotNull(resources);
+        checkNotNull(discussionThreadRepository);
+        this.components = Suppliers.memoize(() -> new ProjectComponents(this, discussionThreadRepository));
         this.lastAccess = checkNotNull(loadedAt);
     }
 
@@ -258,6 +266,14 @@ public final class ProjectContext implements AutoCloseable {
     @Nonnull
     public ChangeManager changeManager() {
         return changeManager;
+    }
+
+    /**
+     * The collaborators of the editing and search use cases, created on first use.
+     */
+    @Nonnull
+    public ProjectComponents components() {
+        return components.get();
     }
 
     /**
