@@ -78,4 +78,25 @@ class ManchesterSyntaxHtmlEscapingTest {
         var notHttp = renderer.render(dataFactory.getOWLLiteral("httpjavascript:alert(1)"));
         assertThat(notHttp).doesNotContain("<a ").contains("ms-literal");
     }
+
+    /**
+     * Stage S8: the node ids of anonymous individuals and the names of SWRL variables come from uploaded documents
+     * and reach the diffs of {@code GET /changes}.
+     */
+    @Test
+    void anonymousIndividualsAndSwrlVariablesShouldBeEscaped() {
+        var anonymous = renderer.render(dataFactory.getOWLAnonymousIndividual("_:" + SCRIPT));
+        assertThat(anonymous).doesNotContain("<img").contains("&lt;img");
+        var variable = renderer.render(dataFactory.getSWRLVariable(IRI.create("urn:swrl#", SCRIPT)));
+        assertThat(variable).startsWith("?").doesNotContain("<img").contains("&lt;img");
+    }
+
+    @Test
+    void anAnnotationShouldCloseTheSpansItOpens() {
+        var annotation = dataFactory.getOWLAnnotation(dataFactory.getRDFSComment(),
+                                                      dataFactory.getOWLLiteral("Tasty", "en"));
+        var rendered = renderer.render(annotation);
+        assertThat(rendered.split("<span", -1)).hasSameSizeAs(rendered.split("</span>", -1));
+        assertThat(rendered).endsWith("</span>");
+    }
 }

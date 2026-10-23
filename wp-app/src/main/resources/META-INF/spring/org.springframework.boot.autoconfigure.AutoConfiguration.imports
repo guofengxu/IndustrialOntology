@@ -4,3 +4,4 @@ org.industrial.ontology.app.access.AccessAutoConfiguration
 org.industrial.ontology.app.project.ProjectPortsAutoConfiguration
 org.industrial.ontology.app.project.ProjectServicesAutoConfiguration
 org.industrial.ontology.app.project.OntologyServicesAutoConfiguration
+org.industrial.ontology.app.event.ProjectEventsAutoConfiguration

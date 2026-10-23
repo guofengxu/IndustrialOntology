@@ -1,6 +1,12 @@
 package org.industrial.ontology.kernel.project;
 
 import org.industrial.ontology.domain.frame.PropertyValue;
+import org.industrial.ontology.domain.object.OWLClassExpressionSelector;
+import org.industrial.ontology.domain.object.OWLDataPropertyExpressionSelector;
+import org.industrial.ontology.domain.object.OWLIndividualSelector;
+import org.industrial.ontology.domain.object.OWLObjectPropertyExpressionSelector;
+import org.industrial.ontology.domain.object.SWRLAtomSelector;
+import org.industrial.ontology.kernel.api.change.OntologyChangeComparator;
 import org.industrial.ontology.kernel.api.index.AnnotationAssertionAxiomsBySubjectIndex;
 import org.industrial.ontology.kernel.api.index.AnnotationPropertyDomainAxiomsIndex;
 import org.industrial.ontology.kernel.api.index.AnnotationPropertyRangeAxiomsIndex;
@@ -155,6 +161,18 @@ import org.industrial.ontology.kernel.search.EntitySearcherFactory;
 import org.industrial.ontology.kernel.shortform.EscapingShortFormProvider;
 import org.industrial.ontology.kernel.shortform.IriShortFormAdapter;
 import org.industrial.ontology.kernel.shortform.WebProtegeOntologyIRIShortFormProvider;
+import org.industrial.ontology.kernel.revision.ProjectChangesManager;
+import org.industrial.ontology.kernel.revision.RevisionDetailsExtractor;
+import org.industrial.ontology.kernel.axiom.AxiomByRenderingComparator;
+import org.industrial.ontology.kernel.axiom.AxiomBySubjectComparator;
+import org.industrial.ontology.kernel.axiom.AxiomByTypeComparator;
+import org.industrial.ontology.kernel.axiom.AxiomComparator;
+import org.industrial.ontology.kernel.axiom.AxiomSubjectProvider;
+import org.industrial.ontology.kernel.axiom.DefaultAxiomTypeOrdering;
+import org.industrial.ontology.kernel.change.RevisionReverterChangeListGeneratorFactory;
+import org.industrial.ontology.kernel.diff.Revision2DiffElementsTranslator;
+import org.industrial.ontology.kernel.object.OWLObjectComparator;
+import org.industrial.ontology.kernel.render.OWLObjectRendererImpl;
 import org.industrial.ontology.kernel.usage.ReferencingAxiomVisitorFactory;
 import org.industrial.ontology.kernel.util.EntityDeleter;
 import org.industrial.ontology.kernel.util.ReferenceFinder;
@@ -241,6 +259,12 @@ public final class ProjectComponents {
     private final EditAnnotationsChangeListGeneratorFactory editAnnotations;
 
     private final EntitySearcherFactory entitySearchers;
+
+    private final ProjectChangesManager projectChanges;
+
+    private final RevisionDetailsExtractor revisionDetails;
+
+    private final RevisionReverterChangeListGeneratorFactory revisionReverters;
 
     ProjectComponents(@Nonnull ProjectContext context,
                       @Nonnull EntityDiscussionThreadRepository discussionThreadRepository) {
@@ -355,6 +379,27 @@ public final class ProjectComponents {
         entitySearchers = new EntitySearcherFactory(() -> projectId,
                                                     () -> dictionary,
                                                     context::entityNodeRenderer);
+        // Revisions (stage S8): the legacy bindings of OWLObjectComparatorImpl, the axiom subject provider and
+        // AxiomComparatorImpl, which order the changes of a revision by subject, axiom type and rendering
+        var objectComparator = new OWLObjectComparator(rendering);
+        var axiomSubjects = new AxiomSubjectProvider(new OWLClassExpressionSelector(objectComparator),
+                                                     new OWLObjectPropertyExpressionSelector(objectComparator),
+                                                     new OWLDataPropertyExpressionSelector(objectComparator),
+                                                     new OWLIndividualSelector(objectComparator),
+                                                     new SWRLAtomSelector(objectComparator));
+        var axiomComparator = new AxiomComparator(new AxiomBySubjectComparator(axiomSubjects, objectComparator),
+                                                  new AxiomByTypeComparator(DefaultAxiomTypeOrdering.get()),
+                                                  new AxiomByRenderingComparator(new OWLObjectRendererImpl(rendering)));
+        projectChanges = new ProjectChangesManager(projectId,
+                                                   context.revisionManager(),
+                                                   rendering,
+                                                   new OntologyChangeComparator(axiomComparator, objectComparator),
+                                                   () -> new Revision2DiffElementsTranslator(
+                                                           ontologyIriShortFormProvider,
+                                                           defaultOntologyIdManager,
+                                                           projectOntologies));
+        revisionDetails = new RevisionDetailsExtractor(axiomSubjects);
+        revisionReverters = new RevisionReverterChangeListGeneratorFactory(context::revisionManager);
     }
 
     /**
@@ -639,6 +684,27 @@ public final class ProjectComponents {
     @Nonnull
     public EntitySearcherFactory entitySearcherFactory() {
         return entitySearchers;
+    }
+
+    /**
+     * The project's changes, a revision at a time and rendered as diffs (legacy {@code GetProjectChanges}).
+     */
+    @Nonnull
+    public ProjectChangesManager projectChangesManager() {
+        return projectChanges;
+    }
+
+    /**
+     * The axioms that a revision added or removed, with their subjects.
+     */
+    @Nonnull
+    public RevisionDetailsExtractor revisionDetailsExtractor() {
+        return revisionDetails;
+    }
+
+    @Nonnull
+    public RevisionReverterChangeListGeneratorFactory revisionReverterChangeListGeneratorFactory() {
+        return revisionReverters;
     }
 
     private <T> T index(Class<T> indexClass) {

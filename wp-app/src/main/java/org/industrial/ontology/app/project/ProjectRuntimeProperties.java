@@ -35,14 +35,38 @@ public record ProjectRuntimeProperties(@DefaultValue Project project,
     }
 
     /**
-     * @param retention how long a project's events can be read back by event tag (legacy: 60 seconds)
+     * @param retention               how long a project's events can be read back by event tag (legacy: 60 seconds)
+     * @param maxBatch                the largest batch of events that is recorded and delivered (legacy: 200)
+     * @param heartbeat               how often an event stream is pinged, keeps its project loaded and checks that
+     *                                its user may still view the project (docs/02 §5: 25 seconds)
+     * @param streamTimeout           how long an event stream stays open; clients reconnect from the last event id
+     * @param maxSubscriptionsPerUser how many event streams one user may have open at a time
+     * @param maxQueuedBatches        how many batches may wait for a slow stream before the stream is closed, after
+     *                                which its client reconnects and catches up from the retained events
      */
-    public record Events(@DefaultValue("PT10M") Duration retention) {
+    public record Events(@DefaultValue("PT10M") Duration retention,
+                         @DefaultValue("200") int maxBatch,
+                         @DefaultValue("PT25S") Duration heartbeat,
+                         @DefaultValue("PT30M") Duration streamTimeout,
+                         @DefaultValue("20") int maxSubscriptionsPerUser,
+                         @DefaultValue("1000") int maxQueuedBatches) {
 
         public Events {
             checkNotNull(retention, "retention");
             checkArgument(retention.compareTo(Duration.ZERO) > 0,
                           "webprotege.events.retention must be positive: %s", retention);
+            checkArgument(maxBatch > 0, "webprotege.events.max-batch must be positive: %s", maxBatch);
+            checkNotNull(heartbeat, "heartbeat");
+            checkArgument(heartbeat.compareTo(Duration.ZERO) > 0,
+                          "webprotege.events.heartbeat must be positive: %s", heartbeat);
+            checkNotNull(streamTimeout, "streamTimeout");
+            checkArgument(streamTimeout.compareTo(Duration.ZERO) > 0,
+                          "webprotege.events.stream-timeout must be positive: %s", streamTimeout);
+            checkArgument(maxSubscriptionsPerUser > 0,
+                          "webprotege.events.max-subscriptions-per-user must be positive: %s",
+                          maxSubscriptionsPerUser);
+            checkArgument(maxQueuedBatches > 0,
+                          "webprotege.events.max-queued-batches must be positive: %s", maxQueuedBatches);
         }
     }
 

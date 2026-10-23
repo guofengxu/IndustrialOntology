@@ -156,6 +156,22 @@ public class ProjectRegistry {
     }
 
     /**
+     * Records a use of the project if the context is still its open context, without loading the project: an open
+     * event stream keeps its project loaded this way (stage S8), and learns when its context has been closed.
+     *
+     * @return {@code false} if the context has been closed, or replaced by a later load of the project
+     */
+    public boolean touchIfOpen(@Nonnull ProjectContext context) {
+        checkNotNull(context);
+        var current = recentlyUsed.getIfPresent(context.projectId());
+        if (current != context || context.isClosed()) {
+            return false;
+        }
+        context.touch(Instant.now());
+        return true;
+    }
+
+    /**
      * Returns the project's context if the project is loaded, without loading it or counting as a use, so that
      * polling a project does not keep it from becoming dormant. The legacy {@code getProjectEventManagerIfActive}
      * read project events this way.

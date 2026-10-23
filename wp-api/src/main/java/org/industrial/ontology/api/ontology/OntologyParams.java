@@ -22,9 +22,9 @@ import java.util.Set;
  * Parses the parameters of the ontology editing and search endpoints (docs/02 §1): IRIs, which go in the query,
  * entity types, by their OWL API names ({@code Class}, {@code ObjectProperty}, {@code DataProperty},
  * {@code AnnotationProperty}, {@code NamedIndividual}, {@code Datatype}, case ignored, with or without the
- * {@code owl:}/{@code rdfs:} prefix of the entity JSON), and pages.
+ * {@code owl:}/{@code rdfs:} prefix of the entity JSON), and pages; the revision endpoints of S8 use them too.
  */
-final class OntologyParams {
+public final class OntologyParams {
 
     static final String INVALID_IRI = "INVALID_IRI";
 
@@ -91,7 +91,7 @@ final class OntologyParams {
     }
 
     @Nonnull
-    static OWLEntity entity(@Nullable String iri, @Nullable String type) {
+    public static OWLEntity entity(@Nullable String iri, @Nullable String type) {
         return DATA_FACTORY.getOWLEntity(entityType(type), iri(iri));
     }
 
@@ -104,9 +104,13 @@ final class OntologyParams {
      * A page request; pages start at 1 and hold 1 to {@code maxSize} elements.
      */
     @Nonnull
-    static PageRequest page(int page, int size, int maxSize) {
+    public static PageRequest page(int page, int size, int maxSize) {
         if (page < 1 || size < 1 || size > maxSize) {
             throw WpException.invalidRequest("Pages start at 1 and hold 1 to " + maxSize + " elements");
+        }
+        if ((long) (page - 1) * size > Integer.MAX_VALUE) {
+            // PageRequest counts the elements to skip in an int (security review of S8)
+            throw WpException.invalidRequest("There is no page " + page + " of " + size + " elements");
         }
         return PageRequest.requestPageWithSize(page, size);
     }

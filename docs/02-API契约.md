@@ -162,16 +162,23 @@
 
 | 方法 | 路径 | 权限 | 说明 |
 |---|---|---|---|
-| GET | `/api/v1/projects/{projectId}/revisions?from=&to=&userId=` | VIEW_CHANGES | `RevisionDetails[]` |
-| GET | `/api/v1/projects/{projectId}/revisions/head` | VIEW_PROJECT | `{number}` |
-| GET | `/api/v1/projects/{projectId}/revisions/{n}` | VIEW_CHANGES | 含变更摘要 |
-| GET | `/api/v1/projects/{projectId}/changes?entity=&page=&size=` | VIEW_CHANGES | `ProjectChange[]`（含 diff 元素，旧 `GetProjectChanges`） |
-| GET | `/api/v1/projects/{projectId}/changes/watched?page=` | WATCH_CHANGES | |
-| POST | `/api/v1/projects/{projectId}/revisions/{n}/revert` | REVERT_CHANGES | 写结果 |
-| GET | `/api/v1/projects/{projectId}/events?since=<tag>` | VIEW_PROJECT | 一次性拉取（断线补发） |
-| GET | `/api/v1/projects/{projectId}/events/stream?since=<tag>` | VIEW_PROJECT | `text/event-stream`；事件 `id` = eventTag，`event` = 事件类型名，`data` = 事件 JSON；心跳每 25 s `: ping` |
+| GET | `/api/v1/projects/{projectId}/revisions?from=&to=&userId=` | VIEW_CHANGES | 修订摘要 `[{number, timestamp, userId, description, changeCount}]`，从旧到新，每次最多 1000 条 |
+| GET | `/api/v1/projects/{projectId}/revisions/head` | VIEW_CHANGES | `{number}`（同旧 handler；本稿原写 VIEW_PROJECT） |
+| GET | `/api/v1/projects/{projectId}/revisions/{n}` | VIEW_CHANGES | `{number, timestamp, userId, description, subjects[], changeCount, changes:[{operation, axiom}], tags:[]}` |
+| GET | `/api/v1/projects/{projectId}/revisions/diff?from=&to=` | VIEW_CHANGES | `{from, to, addedCount, removedCount, addedAxioms[], removedAxioms[]}`，公理为 Manchester 文本 |
+| GET | `/api/v1/projects/{projectId}/changes?iri=&type=&page=&size=` | VIEW_CHANGES | 分页的 `ProjectChange`（含 diff 行，旧 `GetProjectChanges`），从新到旧；本稿原写 `entity=` |
+| GET | `/api/v1/projects/{projectId}/changes/watched?page=` | WATCH_CHANGES | 随关注在 S8b 实现 |
+| POST | `/api/v1/projects/{projectId}/revisions/{n}/revert` | REVERT_CHANGES + EDIT_ONTOLOGY | 写结果，`result` 为 `{reverted: n}`；请求体可带 `{commitMessage}` |
+| GET | `/api/v1/projects/{projectId}/events?since=<位置>` | VIEW_PROJECT | 一次性拉取（断线补发）：`{projectId, epoch, since, tag, position, events[]}` |
+| GET | `/api/v1/projects/{projectId}/events/stream?since=<位置>` | VIEW_PROJECT | `text/event-stream`；一批事件一条消息：`id` = 位置，`event` = `events`，`data` = `{epoch, tag, events[]}`；心跳每 25 s `:ping`；本稿原写一个事件一条消息 |
 
-治理模块（P3）需要的预留：`revisions/{n}` 返回 `{tags[]}`（快照标签）；`GET /revisions/diff?from=&to=` 返回轴向差异（`addedAxioms[]`, `removedAxioms[]` 的 Manchester 文本）；P1 先实现 diff 接口，标签字段留空数组。
+已实现（S8a，07 第十轮）：
+- **位置**：写作 `<epoch>-<tag>`，`tag` 是一批事件（如一次修改的全部事件）的序号，`epoch` 是项目这次加载的纪元（8 位十六进制）；项目每次加载标签从 0 重来，纪元不同的位置不能续读。只有标签的位置（如修改返回的 `eventTag`）也接受，此时只能发现"标签超前"。`events` 不带 `since` 时只返回当前位置；`stream` 不带 `since`、`Last-Event-ID` 时从当前位置开始，`Last-Event-ID` 优先于 `since`。
+- **410 `EVENTS_EXPIRED`**：位置之后的事件已超出保留期（`webprotege.events.retention`），或位置超前、纪元不符，或补发会超过 `max-queued-batches` 批或 10000 个事件。客户端此时重新加载数据，再从当前位置读。**429 `TOO_MANY_SUBSCRIPTIONS`**：同一用户的事件流超过 `max-subscriptions-per-user`（默认 20）。
+- **事件流**：一批事件一条消息，断在一批中间也不会丢或重复；事件 JSON 的类型名在 `type`。流内每个心跳复查 `ViewProject` 和凭证（令牌到期、API Key 被删除即结束），超过 `stream-timeout`（默认 30 分钟）结束；落后超过 `max-queued-batches` 的客户端被断开后从收到的最后一批重连。浏览器的 `EventSource` 不能带 `Authorization` 头，流票据在 S8c 实现，在那之前用能带请求头的 SSE 客户端。
+- **修订**：`revisions/{n}` 只列前 1000 个变更中的公理变更，`changeCount` 是全部变更数（含本体注解和 imports）；修订号从 1 起，head 别名不接受。`changes` 每个修订最多 50 行差异，`html` 中的字面量、IRI、链接都已转义。`description`、`summary`、`axiom`、`document` 是纯文本，按文本显示。时间均为 ISO-8601 UTC。
+
+治理模块（P3）需要的预留：`revisions/{n}` 返回 `{tags[]}`（快照标签）；`GET /revisions/diff?from=&to=` 返回轴向差异（`addedAxioms[]`, `removedAxioms[]` 的 Manchester 文本）；P1 先实现 diff 接口，标签字段留空数组（S8a 已实现）。
 
 ---
 

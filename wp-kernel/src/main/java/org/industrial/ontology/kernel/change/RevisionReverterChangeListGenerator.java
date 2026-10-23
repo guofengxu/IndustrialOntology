@@ -8,7 +8,7 @@ import org.industrial.ontology.kernel.api.revision.RevisionManager;
 import org.industrial.ontology.domain.revision.RevisionNumber;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-
+import java.util.Collections;
 import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.industrial.ontology.kernel.api.change.OntologyChange;
@@ -50,9 +50,10 @@ public class RevisionReverterChangeListGenerator implements ChangeListGenerator<
         var changes = new ArrayList<OntologyChange>();
         var theRevision = revision.get();
         for(OntologyChange change : theRevision.getChanges()) {
-            var inverseChange = change.getInverseChange();
-            changes.add(0, inverseChange);
+            changes.add(change.getInverseChange());
         }
+        // Newest first, as the legacy code had it; it inserted each change at the front, quadratic for an import
+        Collections.reverse(changes);
         return OntologyChangeList.<Boolean>builder().addAll(changes).build(true);
     }
 
